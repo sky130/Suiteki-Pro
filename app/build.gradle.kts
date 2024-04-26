@@ -1,7 +1,10 @@
+import com.google.protobuf.gradle.id
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.protobuf)
 }
 
 android {
@@ -49,12 +52,16 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.12"
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+    sourceSets {
+        this["release"].java.srcDir(protobuf.generatedFilesBaseDir)
+        this["debug"].java.srcDir(protobuf.generatedFilesBaseDir)
     }
 }
 
@@ -70,16 +77,40 @@ dependencies {
     implementation(libs.androidx.material3)
 
 
-
     implementation(libs.okhttp)
+    implementation(libs.okio)
+
+
+
     implementation(libs.gson)
+    implementation(libs.flexbox)
 
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+
+    implementation(libs.materialkolor)
+
+
+    implementation(libs.protobuf.java)
+//    implementation(libs.protobuf.kotlin.lite)
 }
+
+
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.0.0"
+    }
+    generateProtoTasks {
+        all().configureEach {
+            builtins {
+                id("java") {
+//                    option("lite")
+                }
+            }
+        }
+    }
+}
+

@@ -1,6 +1,6 @@
 [versions]
 agp = "8.5.0-alpha06"
-kotlin = "1.9.22"
+kotlin = "1.9.23"
 flexbox = "3.0.0"
 coreKtx = "1.13.0"
 junit = "4.13.2"
@@ -12,8 +12,9 @@ composeBom = "2024.04.01"
 google-protobuf = "0.9.4"
 converterGson = "2.9.0"
 appcenter = "4.4.5"
+protobufLite = "3.25.3"
 room = "2.6.1"
-ksp = "1.9.22-1.0.17"
+ksp = "1.9.23-1.0.20"
 okio = "3.4.0"
 okhttp = "5.0.0-alpha.11"
 materialkolor = "1.4.4"
@@ -43,12 +44,15 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 materialkolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
+#protobuf-java-lite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufLite"}
+protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobufLite" }
+protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobufLite" }
 retrofit-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-google-protobuf = { id = "com.google.protobuf:protobuf-gradle-plugin", version.ref = "google-protobuf" }
+google-protobuf = { id = "com.google.protobuf", version.ref = "google-protobuf" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
