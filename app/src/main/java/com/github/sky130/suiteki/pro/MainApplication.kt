@@ -17,8 +17,5 @@ class MainApplication : Application() {
         mContext = this
         com.clj.fastble.BleManager.getInstance().enableLog(true).init(this)
         SuitekiManager.init()
-        "CA:2B:B0:DD:5B:31"
-        "Xiaomi Smart Band 7 5B31"
-        "3067bf322963fcbd0c931b4e5f174933"
     }
 }
