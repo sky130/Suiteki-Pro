@@ -1,4 +1,4 @@
-package com.github.sky130.suiteki.pro.device.miband8
+package com.github.sky130.suiteki.pro.device.xiaomi
 
 import android.os.Build
 import com.github.sky130.suiteki.pro.logic.ble.AbstractAuthService

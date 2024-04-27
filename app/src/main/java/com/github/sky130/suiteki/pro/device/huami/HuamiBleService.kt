@@ -1,4 +1,4 @@
-package com.github.sky130.suiteki.pro.device.miband7
+package com.github.sky130.suiteki.pro.device.huami
 
 import com.github.sky130.suiteki.pro.logic.ble.AbstractBleService
 import com.github.sky130.suiteki.pro.logic.ble.UUIDS

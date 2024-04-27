@@ -1,4 +1,4 @@
-package com.github.sky130.suiteki.pro.device.miband7
+package com.github.sky130.suiteki.pro.device.huami
 
 object HuamiService {
     const val BASE_UUID = "0000%s-0000-1000-8000-00805f9b34fb" // 基础UUID

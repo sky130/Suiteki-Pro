@@ -1,12 +1,12 @@
-package com.github.sky130.suiteki.pro.device.miband7
+package com.github.sky130.suiteki.pro.device
 
-import com.github.sky130.suiteki.pro.logic.ble.AbstractAuthService
+import com.github.sky130.suiteki.pro.device.huami.HuamiAuthService
+import com.github.sky130.suiteki.pro.device.huami.HuamiBleService
+import com.github.sky130.suiteki.pro.device.huami.HuamiService
 import com.github.sky130.suiteki.pro.logic.ble.AbstractBleDevice
-import com.github.sky130.suiteki.pro.logic.ble.AbstractBleService
 import com.github.sky130.suiteki.pro.logic.ble.BleSupport
 import com.github.sky130.suiteki.pro.logic.ble.SuitekiDevice
 import com.github.sky130.suiteki.pro.logic.ble.UUIDS
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @SuitekiDevice(pattern = "^Xiaomi Smart Band 7 [A-Z0-9]{4}$")

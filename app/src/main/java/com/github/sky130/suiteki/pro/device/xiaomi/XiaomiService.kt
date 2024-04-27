@@ -1,4 +1,4 @@
-package com.github.sky130.suiteki.pro.device.miband8
+package com.github.sky130.suiteki.pro.device.xiaomi
 
 object XiaomiService {
     const val UUID_SERVICE = "0000fe95-0000-1000-8000-00805f9b34fb"
