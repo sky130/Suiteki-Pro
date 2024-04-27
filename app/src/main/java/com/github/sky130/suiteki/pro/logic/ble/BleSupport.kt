@@ -31,8 +31,8 @@ class BleSupport(private val mac: String) : BleGattCallback() {
     override fun onConnectFail(bleDevice: BleDevice, exception: BleException) {}
 
     override fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt, status: Int) {
-        this.bleDevice = bleDevice
         scope.launch {
+            this@BleSupport.bleDevice = bleDevice
             for ((service, characteristic) in device.notifyUUIDs) {
                 manager.notify(bleDevice, service, characteristic, object : BleNotifyCallback() {
                     override fun onNotifySuccess() {

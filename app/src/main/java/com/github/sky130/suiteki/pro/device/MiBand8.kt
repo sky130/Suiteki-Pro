@@ -9,10 +9,16 @@ import com.github.sky130.suiteki.pro.logic.ble.SuitekiDevice
 import com.github.sky130.suiteki.pro.logic.ble.UUIDS
 import kotlinx.coroutines.flow.MutableStateFlow
 
+@Suppress("LeakingThis")
 @SuitekiDevice(pattern = "^Xiaomi Smart Band 8 [A-Z0-9]{4}$")
-class MiBand8(name: String, mac: String, key: String, support: BleSupport) : AbstractBleDevice(
+open class MiBand8(name: String, mac: String, key: String, support: BleSupport) : AbstractBleDevice(
     name, mac, key, support
 ) {
+
+    init {
+        support.initNotify(this)
+    }
+
     override val ble by lazy { XiaomiBleService() }
     override val auth by lazy { XiaomiAuthService(support) }
     override val version = MutableStateFlow("unknown")
