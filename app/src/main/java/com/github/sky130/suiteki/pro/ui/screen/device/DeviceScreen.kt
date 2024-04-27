@@ -1,0 +1,124 @@
+package com.github.sky130.suiteki.pro.ui.screen.device
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Watch
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
+import com.github.sky130.suiteki.pro.logic.database.AppDatabase
+import com.github.sky130.suiteki.pro.logic.database.model.Device
+import com.github.sky130.suiteki.pro.ui.widget.FabScaffold
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeviceScreen() {
+    val visible = remember {
+        mutableStateOf(false)
+    }
+    FabScaffold(
+        fab = {
+            FloatingActionButton(onClick = { visible.value = true }) {
+                Icon(Icons.Filled.Add, null)
+            }
+        },
+    ) {
+
+        DeviceDialog(visible)
+        Column(modifier = Modifier.padding(it)) {
+            val list by AppDatabase.instance.device().getList().collectAsState(initial = listOf())
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+                modifier = Modifier.padding(horizontal = 10.dp)
+            ) {
+                items(list) {
+                    Card(onClick = {
+                        SuitekiManager.connect(it)
+                    }) {
+                        Column(
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .fillMaxWidth()
+                        ) {
+                            Text(it.name)
+                            Spacer(Modifier.height(5.dp))
+                            Text(it.mac)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeviceDialog(visible: MutableState<Boolean>) {
+    val scope = rememberCoroutineScope()
+    var name by remember { mutableStateOf("") }
+    var mac by remember { mutableStateOf("") }
+    var key by remember { mutableStateOf("") }
+    var enable by visible
+    if (!enable) return
+    AlertDialog(
+        onDismissRequest = {},
+        confirmButton = {
+            Button(onClick = {
+                scope.launch {
+                    AppDatabase.instance.device().insert(Device(name, mac, key))
+                }
+                enable = false
+            }) {
+                Text(text = "确定")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = { enable = false }) {
+                Text(text = "取消")
+            }
+        },
+        icon = { Icon(Icons.Filled.Watch, null) },
+        title = { Text(text = "添加设备") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                TextField(value = name, onValueChange = { name = it }, label = { Text("设备名") })
+                TextField(
+                    value = mac,
+                    onValueChange = { mac = it.replace("：", ":") },
+                    label = { Text("MAC地址") })
+                TextField(value = key, onValueChange = { key = it }, label = { Text("密钥") })
+            }
+        }
+    )
+}
+

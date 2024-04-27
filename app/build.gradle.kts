@@ -22,6 +22,9 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
     }
 
     buildTypes {
@@ -84,6 +87,7 @@ dependencies {
 
     implementation(libs.gson)
     implementation(libs.flexbox)
+    debugImplementation(libs.ui.tooling)
 
 
     ksp(libs.androidx.room.compiler)
@@ -93,8 +97,16 @@ dependencies {
     implementation(libs.materialkolor)
 
 
+    implementation(libs.material.icon)
+    implementation(libs.navigation.compose)
+    implementation(libs.navigation.animation)
+    implementation(libs.fastble)
+
+    implementation(libs.apache.commons.lang3)
+
+    implementation(libs.flexible.bottomsheet.material3)
+
     implementation(libs.protobuf.java)
-//    implementation(libs.protobuf.kotlin.lite)
 }
 
 
