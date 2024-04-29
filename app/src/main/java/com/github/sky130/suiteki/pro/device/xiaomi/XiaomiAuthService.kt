@@ -244,8 +244,14 @@ class XiaomiAuthService(val support: BleSupport) : AbstractAuthService() {
     }
 
     override fun onHandle(bytes: ByteArray, uuid: UUIDS) {
-        if (uuid.second == XiaomiService.UUID_CHARACTERISTIC_COMMAND_READ)
-            XiaomiProto.Command.parseFrom(bytes)
+        if (uuid.second != XiaomiService.UUID_CHARACTERISTIC_COMMAND_READ) return
+
+        try{
+            handleCommand(XiaomiProto.Command.parseFrom(decrypt(bytes)))
+        }catch(_:Exception){
+            
+        }
+        
     }
 
     fun sendCommand(data: ByteArray) {
