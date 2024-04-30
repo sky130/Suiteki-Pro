@@ -107,6 +107,8 @@ dependencies {
     implementation(libs.flexible.bottomsheet.material3)
 
     implementation(libs.protobuf.java)
+
+    implementation(files("lib/Bouncycastle.jar"))
 }
 
 
