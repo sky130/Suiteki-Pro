@@ -1,19 +1,15 @@
 package com.github.sky130.suiteki.pro.device.huami
 
-import com.github.sky130.suiteki.pro.logic.ble.AbstractAuthService
-import com.github.sky130.suiteki.pro.logic.ble.AuthStatus
-import com.github.sky130.suiteki.pro.logic.ble.BleSupport
-import com.github.sky130.suiteki.pro.logic.ble.UUIDS
+import com.github.sky130.suiteki.pro.logic.ble.DeviceStatus
+import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
 import com.github.sky130.suiteki.pro.util.BytesUtils
 import com.github.sky130.suiteki.pro.util.CryptoUtils
 import com.github.sky130.suiteki.pro.util.ECDH_B163
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.apache.commons.lang3.ArrayUtils
 import java.nio.ByteBuffer
 import java.util.Random
 
-class HuamiAuthService(private val support: BleSupport) : AbstractAuthService() {
-    override val status = MutableStateFlow(AuthStatus.Authing)
+class HuamiAuthService(private val device: HuamiDevice) {
     private lateinit var authKey: ByteArray
     private lateinit var publicEC: ByteArray
     private lateinit var sharedEC: ByteArray
@@ -29,8 +25,8 @@ class HuamiAuthService(private val support: BleSupport) : AbstractAuthService() 
     private var reassemblyBuffer: ByteBuffer? = null
 
 
-    override fun startAuth(key: String) {
-        authKey = BytesUtils.getSecretKey(key)
+    fun startAuth() {
+        authKey = BytesUtils.getSecretKey(device.key)
         Random().nextBytes(privateEC)
         publicEC = ECDH_B163.ecdh_generate_public(privateEC)
         val sendPubkeyCommand = ByteArray(48 + 4)
@@ -122,7 +118,8 @@ class HuamiAuthService(private val support: BleSupport) : AbstractAuthService() 
             System.arraycopy(data, data.size - remaining, chunk, header_size, copyBytes)
             write(
                 chunk,
-                HuamiService.UUID_SERVICE_MIBAND_SERVICE to HuamiService.UUID_CHARACTERISTIC_AUTH_WRITE
+                HuamiService.UUID_SERVICE_MIBAND_SERVICE,
+                HuamiService.UUID_CHARACTERISTIC_AUTH_WRITE
             )
             remaining -= copyBytes
             header_size = 4
@@ -227,20 +224,24 @@ class HuamiAuthService(private val support: BleSupport) : AbstractAuthService() 
                 e.printStackTrace()
             }
         } else if (payload[0].toInt() == 0x10 && payload[1].toInt() == 0x05 && payload[2].toInt() == 0x01) {
-            status.value = AuthStatus.Success
+            device.status.value = DeviceStatus.Connected
             return
         } else {
-            if (status.value == AuthStatus.Authing)
-                status.value = AuthStatus.Failure
+            if (device.status.value == DeviceStatus.Authing) device.status.value =
+                DeviceStatus.AuthFailure
         }
     }
 
-    override fun write(bytes: ByteArray, uuid: UUIDS) {
-        support.write(bytes, uuid)
+    fun write(bytes: ByteArray, service: String, characteristics: String) {
+        SuitekiManager.log("write", service, characteristics, bytes)
+        device.write(bytes, service, characteristics)
     }
 
-    override fun onHandle(bytes: ByteArray, uuid: UUIDS) {
-        if (uuid != HuamiService.UUID_SERVICE_MIBAND_SERVICE to HuamiService.UUID_CHARACTERISTIC_AUTH_NOTIFY) return
+    fun handleData(bytes: ByteArray, service: String, characteristics: String) {
+        if (service != HuamiService.UUID_SERVICE_MIBAND_SERVICE &&
+            characteristics != HuamiService.UUID_CHARACTERISTIC_AUTH_NOTIFY
+        ) return
+        SuitekiManager.log("handleData", service, characteristics, bytes)
         decode(bytes)
     }
 }

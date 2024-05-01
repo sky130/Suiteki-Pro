@@ -1,8 +1,6 @@
 package com.github.sky130.suiteki.pro.util
 
-import android.util.Log
 import java.nio.ByteBuffer
-import java.util.Arrays
 import java.util.zip.CRC32
 
 object BytesUtils {
@@ -85,6 +83,24 @@ object BytesUtils {
 
     fun longToBytes(a: Long?): ByteArray {
         return hexToBytes(String.format("%08x", a))
+    }
+
+    val HEX_CHARS: CharArray = "0123456789ABCDEF".toCharArray()
+
+
+    fun hexdump(buffer: ByteArray, offset: Int, length: Int): String {
+        var length = length
+        if (length == -1) {
+            length = buffer.size - offset
+        }
+
+        val hexChars = CharArray(length * 2)
+        for (i in 0 until length) {
+            val v = buffer[i + offset].toInt() and 0xFF
+            hexChars[i * 2] = HEX_CHARS[v ushr 4]
+            hexChars[i * 2 + 1] = HEX_CHARS[v and 0x0F]
+        }
+        return String(hexChars)
     }
 
     fun getD2(data_length: Int, CRC: Long): ByteArray {

@@ -1,14 +1,11 @@
 package com.github.sky130.suiteki.pro.device.xiaomi
 
 import android.os.Build
-import com.github.sky130.suiteki.pro.logic.ble.AbstractAuthService
-import com.github.sky130.suiteki.pro.logic.ble.AuthStatus
-import com.github.sky130.suiteki.pro.logic.ble.BleSupport
-import com.github.sky130.suiteki.pro.logic.ble.UUIDS
+import com.github.sky130.suiteki.pro.logic.ble.DeviceStatus
 import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto
+import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto.Command
 import com.github.sky130.suiteki.pro.util.BytesUtils
 import com.google.protobuf.ByteString
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.apache.commons.lang3.ArrayUtils
 import org.bouncycastle.shaded.crypto.CryptoException
 import org.bouncycastle.shaded.crypto.engines.AESEngine
@@ -25,9 +22,8 @@ import java.util.Locale
 import javax.crypto.Mac
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
-import kotlin.math.ceil
 
-class XiaomiAuthService(val support: BleSupport) : AbstractAuthService() {
+class XiaomiAuthService(val device: XiaomiDevice) {
 
     companion object {
         const val COMMAND_TYPE: Int = 1
@@ -36,28 +32,42 @@ class XiaomiAuthService(val support: BleSupport) : AbstractAuthService() {
         const val CMD_AUTH: Int = 27
     }
 
-    override val status = MutableStateFlow(AuthStatus.Authing)
+    val status get() = device.status
     private val secretKey = ByteArray(16)
     private val nonce = ByteArray(16)
     private val encryptionKey = ByteArray(16)
     private val decryptionKey = ByteArray(16)
     private val encryptionNonce = ByteArray(4)
     private val decryptionNonce = ByteArray(4)
-    private var encryptedIndex = 1
-    private var encryptionInitialized = false
+    var encryptionInitialized = false
+    var encryptedIndex = 1
 
 
-    override fun startAuth(key: String) {
+    fun startEncryptedHandshake() {
         System.arraycopy(
-            BytesUtils.getSecretKey(key), 0, secretKey, 0, 16
+            BytesUtils.getSecretKey(device.key), 0, secretKey, 0, 16
         )
         SecureRandom().nextBytes(nonce)
-        sendCommand(buildNonceCommand(nonce).toByteArray())
+        sendCommand(buildNonceCommand(nonce))
     }
 
-    private fun handleWatchNonce(watchNonce: XiaomiProto.WatchNonce): XiaomiProto.Command? {
+    fun startClearTextHandshake() {
+        val auth = XiaomiProto.Auth.newBuilder()
+            .setUserId(device.key)
+            .build()
+
+        val command = Command.newBuilder()
+            .setType(COMMAND_TYPE)
+            .setSubtype(CMD_SEND_USERID)
+            .setAuth(auth)
+            .build()
+
+        sendCommand(command)
+    }
+
+    private fun handleWatchNonce(watchNonce: XiaomiProto.WatchNonce): Command? {
         val step2hmac: ByteArray = computeAuthStep3Hmac(
-            secretKey, nonce, watchNonce.getNonce().toByteArray()
+            secretKey, nonce, watchNonce.nonce.toByteArray()
         )
 
         System.arraycopy(step2hmac, 0, decryptionKey, 0, 16)
@@ -69,7 +79,7 @@ class XiaomiAuthService(val support: BleSupport) : AbstractAuthService() {
         val decryptionConfirmation: ByteArray = hmacSHA256(
             decryptionKey, ArrayUtils.addAll(watchNonce.nonce.toByteArray(), *nonce)
         )
-        if (!Arrays.equals(decryptionConfirmation, watchNonce.getHmac().toByteArray())) {
+        if (!Arrays.equals(decryptionConfirmation, watchNonce.hmac.toByteArray())) {
             return null
         }
 
@@ -88,7 +98,7 @@ class XiaomiAuthService(val support: BleSupport) : AbstractAuthService() {
             .setEncryptedNonces(ByteString.copyFrom(encryptedNonces))
             .setEncryptedDeviceInfo(ByteString.copyFrom(encryptedDeviceInfo)).build()
 
-        val cmd = XiaomiProto.Command.newBuilder()
+        val cmd = Command.newBuilder()
         cmd.setType(COMMAND_TYPE)
         cmd.setSubtype(CMD_AUTH)
 
@@ -98,14 +108,14 @@ class XiaomiAuthService(val support: BleSupport) : AbstractAuthService() {
         return cmd.setAuth(auth.build()).build()
     }
 
-    fun buildNonceCommand(nonce: ByteArray?): XiaomiProto.Command {
+    fun buildNonceCommand(nonce: ByteArray?): Command {
         val phoneNonce = XiaomiProto.PhoneNonce.newBuilder()
         phoneNonce.setNonce(ByteString.copyFrom(nonce))
 
         val auth = XiaomiProto.Auth.newBuilder()
         auth.setPhoneNonce(phoneNonce.build())
 
-        val command = XiaomiProto.Command.newBuilder()
+        val command = Command.newBuilder()
         command.setType(COMMAND_TYPE)
         command.setSubtype(CMD_NONCE)
         command.setAuth(auth.build())
@@ -218,21 +228,21 @@ class XiaomiAuthService(val support: BleSupport) : AbstractAuthService() {
         return blockCipher
     }
 
-    fun handleCommand(cmd: XiaomiProto.Command) {
+    fun handleCommand(cmd: Command) {
         require(cmd.type === COMMAND_TYPE) { "Not an auth command" }
 
         when (cmd.subtype) {
             CMD_NONCE -> {
                 val command = handleWatchNonce(cmd.auth.watchNonce) ?: return
-                sendCommand( command.toByteArray())
+                sendCommand(command)
             }
 
             CMD_AUTH, CMD_SEND_USERID -> {
                 if (cmd.subtype === CMD_AUTH || cmd.auth.status === 1) {
                     encryptionInitialized = (cmd.subtype === CMD_AUTH)
-                    status.value = AuthStatus.Success
+                    status.value = DeviceStatus.Connected
                 } else {
-                    status.value = AuthStatus.Failure
+                    status.value = DeviceStatus.Disconnect
                 }
             }
 
@@ -240,36 +250,18 @@ class XiaomiAuthService(val support: BleSupport) : AbstractAuthService() {
         }
     }
 
-    override fun write(bytes: ByteArray, uuid: UUIDS) {
+
+    fun handleData(bytes: ByteArray) {
+        try {
+            handleCommand(Command.parseFrom(decrypt(bytes)))
+        } catch (_: Exception) {
+
+        }
     }
 
-    override fun onHandle(bytes: ByteArray, uuid: UUIDS) {
-        if (uuid.second != XiaomiService.UUID_CHARACTERISTIC_COMMAND_READ) return
-
-        try{
-            handleCommand(XiaomiProto.Command.parseFrom(decrypt(bytes)))
-        }catch(_:Exception){
-            
-        }
-        
-    }
-
-    fun sendCommand(data: ByteArray) {
-        val currentData = encrypt(data, encryptedIndex).let {
-            ByteBuffer.allocate(2 + it.size).order(ByteOrder.LITTLE_ENDIAN)
-                .putShort(encryptedIndex++.toShort())
-                .put(it)
-                .array()
-        }.let {
-            ByteBuffer.allocate(6).order(ByteOrder.LITTLE_ENDIAN).putShort(0.toShort())
-                .put(0.toByte()).put(1.toByte())
-                .putShort(
-                    ceil((it.size / (244 - 2).toFloat()).toDouble()).toInt().toShort()
-                ).array()
-        }
-        support.write(
-            currentData,
-            XiaomiService.UUID_SERVICE to XiaomiService.UUID_CHARACTERISTIC_COMMAND_WRITE
+    fun sendCommand(command: Command) {
+        device.support.sendCommand(
+            command
         )
     }
 }

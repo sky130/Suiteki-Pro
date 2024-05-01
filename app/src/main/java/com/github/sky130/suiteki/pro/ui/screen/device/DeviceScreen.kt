@@ -36,24 +36,25 @@ import androidx.compose.ui.window.Dialog
 import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
 import com.github.sky130.suiteki.pro.logic.database.AppDatabase
 import com.github.sky130.suiteki.pro.logic.database.model.Device
+import com.github.sky130.suiteki.pro.ui.widget.DialogState
 import com.github.sky130.suiteki.pro.ui.widget.FabScaffold
+import com.github.sky130.suiteki.pro.ui.widget.SuitekiDialog
+import com.github.sky130.suiteki.pro.ui.widget.rememberDialogState
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceScreen() {
-    val visible = remember {
-        mutableStateOf(false)
-    }
+    val dialogState = rememberDialogState()
     FabScaffold(
         fab = {
-            FloatingActionButton(onClick = { visible.value = true }) {
+            FloatingActionButton(onClick = { dialogState.show() }) {
                 Icon(Icons.Filled.Add, null)
             }
         },
     ) {
 
-        DeviceDialog(visible)
+        DeviceDialog(dialogState)
         Column(modifier = Modifier.padding(it)) {
             val list by AppDatabase.instance.device().getList().collectAsState(initial = listOf())
             LazyColumn(
@@ -83,42 +84,38 @@ fun DeviceScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceDialog(visible: MutableState<Boolean>) {
+fun DeviceDialog(dialogState: DialogState) {
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var mac by remember { mutableStateOf("") }
     var key by remember { mutableStateOf("") }
-    var enable by visible
-    if (!enable) return
-    AlertDialog(
+    SuitekiDialog(
+        state = dialogState,
         onDismissRequest = {},
-        confirmButton = {
+        button = {
             Button(onClick = {
                 scope.launch {
                     AppDatabase.instance.device().insert(Device(name, mac, key))
                 }
-                enable = false
+                dialogState.dismiss()
             }) {
                 Text(text = "确定")
             }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = { enable = false }) {
+            OutlinedButton(onClick = { dialogState.dismiss() }) {
                 Text(text = "取消")
             }
         },
-        icon = { Icon(Icons.Filled.Watch, null) },
-        title = { Text(text = "添加设备") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                TextField(value = name, onValueChange = { name = it }, label = { Text("设备名") })
-                TextField(
-                    value = mac,
-                    onValueChange = { mac = it.replace("：", ":") },
-                    label = { Text("MAC地址") })
-                TextField(value = key, onValueChange = { key = it }, label = { Text("密钥") })
-            }
+        icon = Icons.Filled.Watch,
+        title = "添加设备",
+    ){
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            TextField(value = name, onValueChange = { name = it }, label = { Text("设备名") })
+            TextField(
+                value = mac,
+                onValueChange = { mac = it.replace("：", ":") },
+                label = { Text("MAC地址") })
+            TextField(value = key, onValueChange = { key = it }, label = { Text("密钥") })
         }
-    )
+    }
 }
 
