@@ -24,11 +24,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.github.sky130.suiteki.pro.basic.SuitekiActivity
-import com.github.sky130.suiteki.pro.ui.screen.device.DeviceScreen
-import com.github.sky130.suiteki.pro.ui.screen.home.HomeScreen
-import com.github.sky130.suiteki.pro.ui.screen.more.MoreScreen
+import com.github.sky130.suiteki.pro.screen.main.device.DeviceScreen
+import com.github.sky130.suiteki.pro.screen.main.home.HomeScreen
+import com.github.sky130.suiteki.pro.screen.main.more.MoreScreen
 import com.github.sky130.suiteki.pro.ui.theme.SuitekiTheme
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.ramcosta.composedestinations.DestinationsNavHost
+import com.ramcosta.composedestinations.generated.NavGraphs
 
 class MainActivity : SuitekiActivity() {
 
@@ -37,53 +39,7 @@ class MainActivity : SuitekiActivity() {
     @Preview
     override fun Content() {
         SuitekiTheme {
-            val navController = rememberNavController()
-            var currentScreen by remember { mutableStateOf<SuitekiDestination>(Home) }
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = { Text(currentScreen.label) }
-                    )
-                },
-                bottomBar = {
-                    NavigationBar {
-                        for (i in suitekiScreens) {
-                            NavigationBarItem(
-                                selected = i == currentScreen,
-                                onClick = {
-                                    if (currentScreen != i) {
-                                        currentScreen = i
-                                        navController.navigate(i.route)
-                                    }
-                                },
-                                icon = { Icon(i.icon, i.label) },
-                                label = { Text(i.label) }
-                            )
-                        }
-                    }
-                }) { innerPadding ->
-                NavHost(
-                    navController = navController,
-                    startDestination = Home.route,
-                    modifier = Modifier.padding(innerPadding),
-                    enterTransition = {
-                        fadeIn(animationSpec = tween(400), initialAlpha = 0f)
-                    },
-                    exitTransition = {
-                        fadeOut(animationSpec = tween(400), targetAlpha = 0f)
-                    }
-                ) {
-                    composable(route = Home.route) {
-                        HomeScreen()
-                    }
-                    composable(route = Device.route) {
-                        DeviceScreen()
-                    }
-                    composable(route = More.route) {
-                        MoreScreen()
-                    }
-                }
-            }
+            DestinationsNavHost(navGraph = NavGraphs.root)
         }
     }
 

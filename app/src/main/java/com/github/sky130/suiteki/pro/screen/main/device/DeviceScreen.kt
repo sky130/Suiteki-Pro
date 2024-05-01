@@ -1,4 +1,4 @@
-package com.github.sky130.suiteki.pro.ui.screen.device
+package com.github.sky130.suiteki.pro.screen.main.device
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Watch
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,8 +20,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,32 +27,36 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
 import com.github.sky130.suiteki.pro.logic.database.AppDatabase
 import com.github.sky130.suiteki.pro.logic.database.model.Device
+import com.github.sky130.suiteki.pro.screen.main.MainGraph
 import com.github.sky130.suiteki.pro.ui.widget.DialogState
-import com.github.sky130.suiteki.pro.ui.widget.FabScaffold
+import com.github.sky130.suiteki.pro.ui.widget.SuitekiScaffold
 import com.github.sky130.suiteki.pro.ui.widget.SuitekiDialog
+import com.github.sky130.suiteki.pro.ui.widget.SuitekiTopBar
 import com.github.sky130.suiteki.pro.ui.widget.rememberDialogState
+import com.ramcosta.composedestinations.annotation.Destination
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Destination<MainGraph>
 fun DeviceScreen() {
     val dialogState = rememberDialogState()
-    FabScaffold(
+    SuitekiScaffold(
         fab = {
             FloatingActionButton(onClick = { dialogState.show() }) {
                 Icon(Icons.Filled.Add, null)
             }
         },
+        topBar = {
+            SuitekiTopBar(title ="设备")
+        }
     ) {
-
-        DeviceDialog(dialogState)
-        Column(modifier = Modifier.padding(it)) {
+        DeviceLogDialog(dialogState)
+        Column {
             val list by AppDatabase.instance.device().getList().collectAsState(initial = listOf())
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(5.dp),
@@ -84,7 +85,7 @@ fun DeviceScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceDialog(dialogState: DialogState) {
+fun DeviceLogDialog(dialogState: DialogState) {
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var mac by remember { mutableStateOf("") }
@@ -119,3 +120,8 @@ fun DeviceDialog(dialogState: DialogState) {
     }
 }
 
+
+@Composable
+fun DeviceInstallDialog(dialogState: DialogState){
+
+}

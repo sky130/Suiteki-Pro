@@ -1,4 +1,4 @@
-package com.github.sky130.suiteki.pro.ui.screen.home
+package com.github.sky130.suiteki.pro.screen.main.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -41,12 +42,28 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.github.sky130.suiteki.pro.logic.ble.DeviceStatus
 import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
-import com.github.sky130.suiteki.pro.ui.screen.more.AppCard
-import com.github.sky130.suiteki.pro.ui.widget.FabScaffold
+import com.github.sky130.suiteki.pro.screen.main.ExternalNavigator
+import com.github.sky130.suiteki.pro.screen.main.MainGraph
+import com.github.sky130.suiteki.pro.screen.main.more.AppCard
+import com.github.sky130.suiteki.pro.ui.widget.SuitekiScaffold
+import com.github.sky130.suiteki.pro.ui.widget.SuitekiTopBar
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.NavGraph
+import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.NavGraphs
+import com.ramcosta.composedestinations.generated.destinations.FolderScreenDestination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.rememberNavHostEngine
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
-    FabScaffold() {
+@Destination<MainGraph>(start = true)
+fun HomeScreen(navigator: ExternalNavigator) {
+    SuitekiScaffold(
+        topBar = {
+            SuitekiTopBar(title ="主页")
+        }
+    ) {
         Column(
             modifier = Modifier
                 .padding(horizontal = 10.dp)
@@ -98,7 +115,9 @@ fun HomeScreen() {
                     Spacer(modifier = Modifier.height(10.dp))
                     LazyVerticalGrid(columns = GridCells.Fixed(2),modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         item {
-                            AppCard(modifier = Modifier.fillMaxWidth(),"安装",Icons.Default.FolderOpen){}
+                            AppCard(modifier = Modifier.fillMaxWidth(),"安装",Icons.Default.FolderOpen){
+                                navigator.navigator.navigate(FolderScreenDestination)
+                            }
                         }
                         item {
                             AppCard(modifier = Modifier.fillMaxWidth(),"调试",Icons.Default.Code){

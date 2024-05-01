@@ -108,6 +108,9 @@ dependencies {
 
     implementation(libs.protobuf.java)
 
+    implementation("io.github.raamcosta.compose-destinations:core:2.0.0-beta01")
+    ksp("io.github.raamcosta.compose-destinations:ksp:2.0.0-beta01")
+
     implementation(files("lib/Bouncycastle.jar"))
 }
 
@@ -120,9 +123,7 @@ protobuf {
     generateProtoTasks {
         all().configureEach {
             builtins {
-                id("java") {
-//                    option("lite")
-                }
+                id("java"){}
             }
         }
     }

@@ -1,4 +1,4 @@
-package com.github.sky130.suiteki.pro.ui.screen.more
+package com.github.sky130.suiteki.pro.screen.main.more
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +15,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -35,7 +36,11 @@ import androidx.compose.ui.unit.dp
 import com.github.sky130.suiteki.pro.logic.database.AppDatabase
 import com.github.sky130.suiteki.pro.logic.database.model.Device
 import com.github.sky130.suiteki.pro.logic.handler.CrashHandler
+import com.github.sky130.suiteki.pro.screen.main.MainGraph
 import com.github.sky130.suiteki.pro.ui.theme.SuitekiTheme
+import com.github.sky130.suiteki.pro.ui.widget.SuitekiScaffold
+import com.github.sky130.suiteki.pro.ui.widget.SuitekiTopBar
+import com.ramcosta.composedestinations.annotation.Destination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -52,24 +57,28 @@ val flow = flow {
     }
 }.flowOn(Dispatchers.IO)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Preview
+@Destination<MainGraph>
 fun MoreScreen() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 10.dp)
-    ) {
-        val visible = remember {
-            mutableStateOf(false)
+    SuitekiScaffold(topBar = {
+        SuitekiTopBar(title ="更多")
+
+    }) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp)
+        ) {
+            val visible = remember {
+                mutableStateOf(false)
+            }
+            LogDialog(visible)
+            AppCard(Modifier,"日志", Icons.Default.Info){
+                visible.value = true
+            }
         }
-        LogDialog(visible)
-        AppCard(Modifier,"日志", Icons.Default.Info){
-            visible.value = true
-        }
-//        AppCard("测试", Icons.Default.Info){}
-//        AppCard("测试", Icons.Default.Info){}
     }
 }
 
