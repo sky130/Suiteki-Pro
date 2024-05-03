@@ -10,9 +10,9 @@ import java.nio.ByteBuffer
 import java.util.Random
 
 class HuamiAuthService(private val device: HuamiDevice) {
-    private lateinit var authKey: ByteArray
     private lateinit var publicEC: ByteArray
     private lateinit var sharedEC: ByteArray
+    private var authKey =BytesUtils.getSecretKey(device.key)
     private var writeHandle: Byte = 0
     private var privateEC = ByteArray(24)
     private var remotePublicEC = ByteArray(48)
@@ -26,7 +26,6 @@ class HuamiAuthService(private val device: HuamiDevice) {
 
 
     fun startAuth() {
-        authKey = BytesUtils.getSecretKey(device.key)
         Random().nextBytes(privateEC)
         publicEC = ECDH_B163.ecdh_generate_public(privateEC)
         val sendPubkeyCommand = ByteArray(48 + 4)

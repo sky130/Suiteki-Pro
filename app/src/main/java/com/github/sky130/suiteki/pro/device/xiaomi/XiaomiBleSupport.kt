@@ -45,8 +45,28 @@ class XiaomiBleSupport(device: XiaomiDevice) : XiaomiAbstractSupport(device) {
                     override fun onWriteFailure(exception: BleException?) {
 
                     }
-                })
+                }
+            )
         }
+    }
+
+
+    override fun sendDataChunk(data: ByteArray, onSend: () -> Unit) {
+        manager.write(
+            bleDevice,
+            XiaomiService.UUID_SERVICE,
+            XiaomiService.UUID_CHARACTERISTIC_DATA_UPLOAD,
+            data,
+            object : BleWriteCallback() {
+                override fun onWriteSuccess(current: Int, total: Int, justWrite: ByteArray?) {
+                    onSend()
+                }
+
+                override fun onWriteFailure(exception: BleException?) {
+
+                }
+            }
+        )
     }
 
     private lateinit var bleDevice: BleDevice

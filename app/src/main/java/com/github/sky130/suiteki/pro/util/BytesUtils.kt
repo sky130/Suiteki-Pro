@@ -34,7 +34,7 @@ object BytesUtils {
         authKey = if (!key.startsWith("0x")) "0x$key" else key
         var srcBytes = authKey.trim { it <= ' ' }.toByteArray()
         if (authKey.length == 34 && authKey.startsWith("0x")) {
-            srcBytes = BytesUtils.hexToBytes(authKey.substring(2))
+            srcBytes = hexToBytes(authKey.substring(2))
         }
         System.arraycopy(srcBytes, 0, authKeyBytes, 0, srcBytes.size.coerceAtMost(16))
         return authKeyBytes
@@ -201,31 +201,45 @@ object BytesUtils {
         return arrayOfByte2
     }
 
-    fun spiltBytes(original: ByteArray): ArrayList<ByteArray> {
-        var length = original.size
-        val result = ArrayList<ByteArray>()
-        var index = 0
-        var count = 0
-        while (length > 0) if (count < 33) if (length >= 244) {
-            val sub = ByteArray(244)
-            System.arraycopy(original, index, sub, 0, 244)
-            result.add(sub)
-            index += 244
-            length -= 244
-            count++
-        } else break else if (length >= 140) {
-            val sub = ByteArray(140)
-            System.arraycopy(original, index, sub, 0, 140)
-            result.add(sub)
-            index += 140
-            length -= 140
-            count = 0
-        } else break
-        if (length > 0) {
-            val sub = ByteArray(length)
-            System.arraycopy(original, index, sub, 0, length)
-            result.add(sub)
+//    fun spiltBytes(original: ByteArray): ArrayList<ByteArray> {
+//        var length = original.size
+//        val result = ArrayList<ByteArray>()
+//        var index = 0
+//        var count = 0
+//        while (length > 0) if (count < 33) if (length >= 244) {
+//            val sub = ByteArray(244)
+//            System.arraycopy(original, index, sub, 0, 244)
+//            result.add(sub)
+//            index += 244
+//            length -= 244
+//            count++
+//        } else break else if (length >= 140) {
+//            val sub = ByteArray(140)
+//            System.arraycopy(original, index, sub, 0, 140)
+//            result.add(sub)
+//            index += 140
+//            length -= 140
+//            count = 0
+//        } else break
+//        if (length > 0) {
+//            val sub = ByteArray(length)
+//            System.arraycopy(original, index, sub, 0, length)
+//            result.add(sub)
+//        }
+//        return result
+//    }
+
+    fun splitBytes(original: ByteArray, num: Int = 8192): ArrayList<ByteArray> {
+        val byteArrayList = ArrayList<ByteArray>()
+        var startIndex = 0
+
+        while (startIndex < original.size) {
+            val endIndex = minOf(startIndex + num, original.size)
+            byteArrayList.add(original.sliceArray(startIndex until endIndex))
+            startIndex = endIndex
         }
-        return result
+
+        return byteArrayList
     }
+
 }

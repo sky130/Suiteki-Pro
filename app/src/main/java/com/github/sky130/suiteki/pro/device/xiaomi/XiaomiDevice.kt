@@ -19,6 +19,7 @@ abstract class XiaomiDevice(name: String, mac: String, key: String) : AbstractSu
     internal val authService = XiaomiAuthService(this)
     abstract val support: XiaomiAbstractSupport
     private val job = Job()
+    private var installHelper: XiaomiInstallHelper? = null
     val scope = CoroutineScope(job)
 
     open fun handleCommand(command: XiaomiProto.Command) {
@@ -38,11 +39,17 @@ abstract class XiaomiDevice(name: String, mac: String, key: String) : AbstractSu
         status.value = DeviceStatus.Disconnect
     }
 
+    open fun onInstallFinish() {
+        installHelper = null
+    }
+
     override fun onStart() {
         support.start()
     }
 
     override fun install(bytes: ByteArray) {
-        TODO("Not yet implemented")
+        installHelper = XiaomiInstallHelper(this, bytes).apply {
+            install()
+        }
     }
 }

@@ -1,6 +1,10 @@
 package com.github.sky130.suiteki.pro.device.xiaomi
 
 import android.os.Build
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_BATTERY
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_DEVICE_INFO
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_DEVICE_STATE_GET
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.SYSTEM_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.logic.ble.DeviceStatus
 import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto
 import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto.Command
@@ -52,15 +56,11 @@ class XiaomiAuthService(val device: XiaomiDevice) {
     }
 
     fun startClearTextHandshake() {
-        val auth = XiaomiProto.Auth.newBuilder()
-            .setUserId(device.key)
-            .build()
+        val auth = XiaomiProto.Auth.newBuilder().setUserId(device.key).build()
 
-        val command = Command.newBuilder()
-            .setType(COMMAND_TYPE)
-            .setSubtype(CMD_SEND_USERID)
-            .setAuth(auth)
-            .build()
+        val command =
+            Command.newBuilder().setType(COMMAND_TYPE).setSubtype(CMD_SEND_USERID).setAuth(auth)
+                .build()
 
         sendCommand(command)
     }
@@ -229,7 +229,7 @@ class XiaomiAuthService(val device: XiaomiDevice) {
     }
 
     fun handleCommand(cmd: Command) {
-        require(cmd.type === COMMAND_TYPE) { "Not an auth command" }
+        require(cmd.type == COMMAND_TYPE || cmd.type == SYSTEM_COMMAND_TYPE) { "Not an useful command" }
 
         when (cmd.subtype) {
             CMD_NONCE -> {
@@ -238,8 +238,9 @@ class XiaomiAuthService(val device: XiaomiDevice) {
             }
 
             CMD_AUTH, CMD_SEND_USERID -> {
-                if (cmd.subtype === CMD_AUTH || cmd.auth.status === 1) {
-                    encryptionInitialized = (cmd.subtype === CMD_AUTH)
+                if (cmd.subtype == CMD_AUTH || cmd.auth.status == 1) {
+                    encryptionInitialized = (cmd.subtype == CMD_AUTH)
+                    initialize()
                     status.value = DeviceStatus.Connected
                 } else {
                     status.value = DeviceStatus.Disconnect
@@ -247,6 +248,14 @@ class XiaomiAuthService(val device: XiaomiDevice) {
             }
 
             else -> Unit
+        }
+    }
+
+    private fun initialize() {
+        device.support.apply {
+            sendCommand(SYSTEM_COMMAND_TYPE, CMD_DEVICE_INFO)
+            sendCommand(SYSTEM_COMMAND_TYPE, CMD_DEVICE_STATE_GET)
+            sendCommand(SYSTEM_COMMAND_TYPE, CMD_BATTERY)
         }
     }
 
@@ -259,7 +268,7 @@ class XiaomiAuthService(val device: XiaomiDevice) {
         }
     }
 
-    fun sendCommand(command: Command) {
+    private fun sendCommand(command: Command) {
         device.support.sendCommand(
             command
         )

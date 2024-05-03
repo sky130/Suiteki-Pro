@@ -2,17 +2,20 @@ package com.github.sky130.suiteki.pro.logic.ble
 
 import android.util.ArrayMap
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import com.github.sky130.suiteki.pro.MainApplication.Companion.context
 import com.github.sky130.suiteki.pro.logic.database.model.Device
 import com.github.sky130.suiteki.pro.util.BytesUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 object SuitekiManager {
-    private val flow = MutableStateFlow<AbstractSuitekiDevice?>(null)
-    val bleDevice: Flow<AbstractSuitekiDevice?> get() = flow
     private val classMap = ArrayMap<String, Pair<Suiteki, Class<out AbstractSuitekiDevice>>>()
+    private val flow = MutableStateFlow<AbstractSuitekiDevice?>(null)
+    val bleDevice: StateFlow<AbstractSuitekiDevice?> get() = flow
     val logList = mutableListOf<String>()
+    val installStatus = mutableStateOf<InstallStatus>(InstallStatus.Nope)
 
     fun log(vararg str: Any) {
         logList.add(str.joinToString("\n") {

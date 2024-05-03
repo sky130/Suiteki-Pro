@@ -108,8 +108,10 @@ dependencies {
 
     implementation(libs.protobuf.java)
 
-    implementation("io.github.raamcosta.compose-destinations:core:2.0.0-beta01")
-    ksp("io.github.raamcosta.compose-destinations:ksp:2.0.0-beta01")
+    implementation(libs.compose.destinations.core)
+    ksp(libs.compose.destinations.ksp)
+
+    implementation(libs.circularprogressbar.compose)
 
     implementation(files("lib/Bouncycastle.jar"))
 }

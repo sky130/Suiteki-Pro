@@ -61,7 +61,7 @@ fun BaseSuitekiDialog(
 fun SuitekiDialog(
     state: DialogState,
     title: String,
-    icon: ImageVector,
+    icon: ImageVector? = null,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     button: @Composable () -> Unit = {},
@@ -72,7 +72,7 @@ fun SuitekiDialog(
     confirmButton = button,
     modifier = modifier,
     title = { Text(text = title) },
-    icon = { Icon(icon, title) },
+    icon = { icon?.let { Icon(it, title) } },
     text = content
 )
 

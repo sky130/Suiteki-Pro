@@ -24,7 +24,9 @@
     <uses-feature
         android:name="android.hardware.bluetooth"
         android:required="true" />
+
     <application
+        android:name=".MainApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -33,7 +35,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SuitekiPro"
-        android:name=".MainApplication"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"

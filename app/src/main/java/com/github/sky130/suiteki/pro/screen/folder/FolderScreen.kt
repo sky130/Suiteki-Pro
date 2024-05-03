@@ -39,13 +39,16 @@ import com.github.sky130.suiteki.pro.ui.widget.SuitekiTopBar
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import java.io.File
 
 @SuppressLint("MutableCollectionMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Destination<RootGraph>
-fun FolderScreen(navigator: DestinationsNavigator) {
+fun FolderScreen(
+    resultNavigator: ResultBackNavigator<File>
+) {
     val files = remember {
         mutableStateListOf(File("/sdcard"))
     }
@@ -57,7 +60,6 @@ fun FolderScreen(navigator: DestinationsNavigator) {
 
     fun File.refresh() {
         fileList.clear()
-        Log.d("TAG", listFiles().map { name }.joinToString())
         fileList.addAll(listFiles().toMutableList())
     }
 
@@ -83,7 +85,12 @@ fun FolderScreen(navigator: DestinationsNavigator) {
                             },
                             modifier = Modifier.width(IntrinsicSize.Min),
                         ) {
-                            Column(modifier = Modifier.padding(10.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
                                 Text(text = item.name)
                             }
                         }
@@ -96,10 +103,14 @@ fun FolderScreen(navigator: DestinationsNavigator) {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(fileList) {
-                            Log.d("TAG", it.name)
                             OutlinedCard(onClick = {
-                                files.add(it)
-                                it.refresh()
+                                if (it.isDirectory) {
+                                    files.add(it)
+                                    it.refresh()
+                                } else if (it.isFile) {
+                                    Log.d("TAG", "put result ${it.name}")
+                                    resultNavigator.navigateBack(result = it)
+                                }
                             }, modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(10.dp)) {
                                     Text(text = it.name)

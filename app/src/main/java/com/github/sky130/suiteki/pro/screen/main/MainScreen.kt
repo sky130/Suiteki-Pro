@@ -1,5 +1,6 @@
 package com.github.sky130.suiteki.pro.screen.main
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.github.sky130.suiteki.pro.screen.main.home.HomeScreen
 import com.github.sky130.suiteki.pro.ui.theme.SuitekiTheme
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.animations.NavHostAnimatedDestinationStyle
@@ -41,18 +43,25 @@ import com.ramcosta.composedestinations.generated.destinations.FolderScreenDesti
 import com.ramcosta.composedestinations.generated.destinations.HomeScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.MoreScreenDestination
 import com.ramcosta.composedestinations.generated.navgraphs.MainNavGraph
+import com.ramcosta.composedestinations.manualcomposablecalls.composable
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.navigation.dependency
 import com.ramcosta.composedestinations.navigation.navGraph
 import com.ramcosta.composedestinations.navigation.navigate
 import com.ramcosta.composedestinations.navigation.popUpTo
+import com.ramcosta.composedestinations.result.ResultRecipient
+import com.ramcosta.composedestinations.scope.resultRecipient
 import com.ramcosta.composedestinations.spec.DirectionDestinationSpec
 import com.ramcosta.composedestinations.utils.isRouteOnBackStack
 import com.ramcosta.composedestinations.utils.isRouteOnBackStackAsState
+import java.io.File
 
 @Composable
 @Destination<RootGraph>(start = true)
-fun MainScreen(navigator: DestinationsNavigator) {
+fun MainScreen(
+    navigator: DestinationsNavigator,
+    resultRecipient: ResultRecipient<FolderScreenDestination, File>
+) {
     val navController = rememberNavController()
     Scaffold(bottomBar = {
         BottomBar(navController = navController)
@@ -72,7 +81,14 @@ fun MainScreen(navigator: DestinationsNavigator) {
             dependenciesContainerBuilder = {
                 dependency(createExternalNavigator(navigator))
             }
-        )
+        ) {
+            composable(HomeScreenDestination) {
+                HomeScreen(
+                    createExternalNavigator(navigator),
+                    resultRecipient = resultRecipient
+                )
+            }
+        }
     }
 }
 
