@@ -76,7 +76,7 @@ class XiaomiSppSupport(device: XiaomiDevice) : XiaomiAbstractSupport(device), Xi
     private val writeHandlerThread =
         object : HandlerThread("Write Handler", THREAD_PRIORITY_BACKGROUND) {
             override fun onLooperPrepared() {
-                writeHandler = object : Handler(Looper.getMainLooper()) {
+                writeHandler = object : Handler(getMainLooper()) {
                     override fun handleMessage(msg: Message) {
                         when (msg.what) {
                             0 -> {
