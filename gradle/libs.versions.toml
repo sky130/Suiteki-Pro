@@ -17,6 +17,7 @@ composeBom = "2024.04.01"
 google-protobuf = "0.9.4"
 converterGson = "2.9.0"
 appcenter = "4.4.5"
+permissionFlowCompose = "2.0.0"
 protobufLite = "3.25.3"
 room = "2.6.1"
 ksp = "1.9.23-1.0.20"
@@ -62,6 +63,7 @@ okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 materialkolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
 material-icon = { module = "androidx.compose.material:material-icons-extended", version.ref = "material-icon" }
 #protobuf-java-lite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufLite"}
+permission-flow-compose = { module = "dev.shreyaspatil.permission-flow:permission-flow-compose", version.ref = "permissionFlowCompose" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobufLite" }
 protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobufLite" }
 retrofit-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }

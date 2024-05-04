@@ -113,6 +113,8 @@ dependencies {
 
     implementation(libs.circularprogressbar.compose)
 
+    implementation(libs.permission.flow.compose)
+
     implementation(files("lib/Bouncycastle.jar"))
 }
 
@@ -125,7 +127,7 @@ protobuf {
     generateProtoTasks {
         all().configureEach {
             builtins {
-                id("java"){}
+                id("java") {}
             }
         }
     }
