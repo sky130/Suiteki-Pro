@@ -76,13 +76,21 @@ class XiaomiSppSupport(device: XiaomiDevice) : XiaomiAbstractSupport(device), Xi
     private val writeHandlerThread =
         object : HandlerThread("Write Handler", THREAD_PRIORITY_BACKGROUND) {
             override fun onLooperPrepared() {
-                writeHandler = object : Handler(getMainLooper()) {
+                writeHandler = object : Handler(looper) {
                     override fun handleMessage(msg: Message) {
                         when (msg.what) {
                             0 -> {
-                                socket.connect()
-                                readThread.start()
-                                device.auth()
+                                try {
+                                    socket.connect()
+                                    readThread.start()
+                                    device.auth()
+                                } catch (e: Exception) {
+                                    device.onDisconnect()
+                                    SuitekiManager.log(
+                                        e.message.toString(),
+                                        e.stackTrace.joinToString()
+                                    )
+                                }
                             }
 
                             1 -> {
@@ -90,7 +98,6 @@ class XiaomiSppSupport(device: XiaomiDevice) : XiaomiAbstractSupport(device), Xi
                                 try {
                                     outputStream?.let { stream ->
                                         obj.encode(device.authService, encryptionCounter).let {
-                                            SuitekiManager.log("sendCommand", it)
                                             stream.write(it)
                                             stream.flush()
                                         }
@@ -106,6 +113,32 @@ class XiaomiSppSupport(device: XiaomiDevice) : XiaomiAbstractSupport(device), Xi
                                             socket.isConnected
                                         )
                                     }
+                                }
+                            }
+
+                            2 -> {
+                                val obj = msg.obj as Pair<XiaomiSppPacket, () -> Unit>
+                                try {
+                                    outputStream?.let { stream ->
+                                        obj.first.encode(device.authService, encryptionCounter)
+                                            .let {
+                                                stream.write(it)
+                                                stream.flush()
+                                            }
+                                    }
+                                } catch (e: Exception) {
+                                    SuitekiManager.log(
+                                        "outputStreamError",
+                                        e.message.toString(),
+                                        e.stackTrace.joinToString()
+                                    )
+                                    if (::socket.isInitialized) {
+                                        SuitekiManager.log(
+                                            socket.isConnected
+                                        )
+                                    }
+                                } finally {
+                                    obj.second()
                                 }
                             }
                         }
@@ -236,73 +269,26 @@ class XiaomiSppSupport(device: XiaomiDevice) : XiaomiAbstractSupport(device), Xi
         writeHandlerThread.start()
         adapter.cancelDiscovery()
         dev = adapter.getRemoteDevice(device.mac)
-        socket = dev.createRfcommSocketToServiceRecord(serviceUUID)
+        socket = dev.createInsecureRfcommSocketToServiceRecord(serviceUUID)
         writeHandler.obtainMessage(0).sendToTarget()
-//        scope.launch(Dispatchers.IO) {
-//
-//            try {
-//                socket.connect()
-////                flow {
-////
-////                }.flowOn(Dispatchers.IO).onEach {
-////
-////                }.launchIn(scope)
-//                withContext(Dispatchers.Main) {
-//                    writeHandlerThread.start()
-//                    device.auth()
-//                }
-//            } catch (e: Exception) {
-//                SuitekiManager.log(e.message.toString(), e.stackTrace.joinToString())
-//                device.onDisconnect()
-//            }
-//        }
     }
 
     override fun sendCommand(command: XiaomiProto.Command) {
+        SuitekiManager.log("sendCommand", command.toString())
         writeHandler.obtainMessage(
             1, XiaomiSppPacket.fromXiaomiCommand(
                 command, frameCounter.getAndIncrement(), false
             )
         ).sendToTarget()
-//        scope.launch(Dispatchers.IO) {
-//            val packet =
-//                XiaomiSppPacket.fromXiaomiCommand(command, frameCounter.getAndIncrement(), false)
-//            outputStream?.let { stream ->
-//                packet.encode(device.authService, encryptionCounter).let {
-//                    SuitekiManager.log("sendCommand", it)
-//                    stream.write(it)
-//                    stream.flush()
-//                }
-//            }
-//        }
     }
 
     override fun sendDataChunk(data: ByteArray, onSend: () -> Unit) {
         writeHandler.obtainMessage(
-            1,
+            2,
             XiaomiSppPacket.newBuilder().channel(CHANNEL_MASS).needsResponse(false).flag(true)
                 .opCode(2).frameSerial(frameCounter.getAndIncrement()).dataType(DATA_TYPE_ENCRYPTED)
-                .payload(data).build()
+                .payload(data).build() to onSend
         ).sendToTarget()
-//        scope.launch(Dispatchers.IO) {
-//            val packet = XiaomiSppPacket.newBuilder()
-//                .channel(CHANNEL_MASS)
-//                .needsResponse(false)
-//                .flag(true)
-//                .opCode(2)
-//                .frameSerial(frameCounter.getAndIncrement())
-//                .dataType(DATA_TYPE_ENCRYPTED)
-//                .payload(data)
-//                .build()
-//            outputStream?.let { stream ->
-//                packet.encode(device.authService, encryptionCounter).let {
-//                    SuitekiManager.log("sendCommand", it)
-//                    stream.write(it)
-//                    stream.flush()
-//                }
-//                onSend()
-//            }
-//        }
     }
 
 

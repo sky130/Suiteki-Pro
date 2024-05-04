@@ -4,6 +4,7 @@ package com.github.sky130.suiteki.pro.device.xiaomi
 
 import com.github.sky130.suiteki.pro.logic.ble.AbstractSuitekiDevice
 import com.github.sky130.suiteki.pro.logic.ble.DeviceStatus
+import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
 import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -19,11 +20,16 @@ abstract class XiaomiDevice(name: String, mac: String, key: String) : AbstractSu
     internal val authService = XiaomiAuthService(this)
     abstract val support: XiaomiAbstractSupport
     private val job = Job()
+    private val appListHelper = XiaomiAppListHelper(this)
     private var installHelper: XiaomiInstallHelper? = null
+    override val appList get() = appListHelper.list
     val scope = CoroutineScope(job)
 
     open fun handleCommand(command: XiaomiProto.Command) {
+        SuitekiManager.log("handleCommand", command.toString())
         authService.handleCommand(command)
+        appListHelper.handleCommand(command)
+        installHelper?.handleCommand(command)
     }
 
     fun auth() {
@@ -39,8 +45,16 @@ abstract class XiaomiDevice(name: String, mac: String, key: String) : AbstractSu
         status.value = DeviceStatus.Disconnect
     }
 
+    open fun onAuth(){
+        appListHelper.requestRpkList()
+    }
+
     open fun onInstallFinish() {
         installHelper = null
+    }
+
+    override fun deleteApp(id: String) {
+        appListHelper.delete(id)
     }
 
     override fun onStart() {

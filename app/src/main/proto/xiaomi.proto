@@ -16,6 +16,8 @@ message Command {
   optional Auth auth = 3;
   optional System system = 4;
   optional Watchface watchface = 6;
+  optional RpkMessage rpkMessage = 22;
+
   optional Health health = 10;
   optional Calendar calendar = 14;
   optional Music music = 20;
@@ -385,6 +387,42 @@ message DeviceState {
   optional uint32 warningState = 4; // ?
   optional DeviceActivityState activityState = 5;
 }
+
+//
+// RpkMessage
+//
+
+message RpkMessage{
+  optional RpkList rpkList = 1;
+
+  optional RpkInfo rpkInfo = 2;
+  optional RpkInfoList rpkDel = 5;
+
+  optional RpkInstallStart rpkInstallStart = 3;
+}
+
+message RpkList {
+  repeated RpkInfoList rpkInfo = 1;
+}
+
+message RpkInfo {
+  optional string id = 1;
+  optional uint32 size = 3;
+  optional uint32 unknown2 = 2; // 0
+}
+
+message RpkInfoList {
+  optional string id = 1;
+  optional string name = 5;
+  optional bytes sha = 2;
+  optional uint32 unknown3 = 3;
+  optional uint32 unknown4 = 4;
+}
+
+message RpkInstallStart {
+  optional uint32 cmd = 1;
+}
+
 
 //
 // Watchface

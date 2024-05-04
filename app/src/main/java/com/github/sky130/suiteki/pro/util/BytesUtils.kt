@@ -201,6 +201,16 @@ object BytesUtils {
         return arrayOfByte2
     }
 
+    fun getAppBytes(byte: ByteArray): ByteArray {
+        val arrayOfByte2 =
+            hexToBytes("030700570014000000A000020103000000000000000000000000002B670000")
+        arrayOfByte2[arrayOfByte2.size - 4] = byte[0]
+        arrayOfByte2[arrayOfByte2.size - 3] = byte[1]
+        arrayOfByte2[arrayOfByte2.size - 2] = byte[2]
+        arrayOfByte2[arrayOfByte2.size - 1] = byte[3]
+        return arrayOfByte2
+    }
+
 //    fun spiltBytes(original: ByteArray): ArrayList<ByteArray> {
 //        var length = original.size
 //        val result = ArrayList<ByteArray>()

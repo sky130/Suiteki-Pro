@@ -16,21 +16,25 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 package com.github.sky130.suiteki.pro.device.xiaomi
 
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_RPK_INSTALL
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_WATCHFACE_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.RPK_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_FIRMWARE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_RPK
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_WATCHFACE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.WATCHFACE_COMMAND_TYPE
-import com.github.sky130.suiteki.pro.util.StringUtils
+import com.github.sky130.suiteki.pro.util.StringUtils.untilNullTerminator
 import com.github.sky130.suiteki.pro.util.ZipUtils
 import org.json.JSONObject
 import java.io.File
 
 
 class XiaomiFWHelper(var bytes: ByteArray?) {
-    var type = -1
+    var subType = -1
         private set
-    var commandType = -1
+    var fileType = -1
+        private set
+    var type = -1
         private set
     var id: String? = null
         private set
@@ -59,38 +63,37 @@ class XiaomiFWHelper(var bytes: ByteArray?) {
     private fun parseBytes() {
         if (parseAsWatchface()) {
             checkNotNull(id)
-            type = TYPE_WATCHFACE
-            commandType = WATCHFACE_COMMAND_TYPE
+            subType = CMD_WATCHFACE_INSTALL
+            type = WATCHFACE_COMMAND_TYPE
+            fileType = TYPE_WATCHFACE
 
         } else if (parseAsFirmware()) {
             checkNotNull(versionName)
-            type = TYPE_FIRMWARE
+            fileType = TYPE_FIRMWARE
             // TODO _commandType = TYPE_FIRMWARE
         } else if (parseAsRpk()) {
-            type = TYPE_RPK
-            commandType = RPK_COMMAND_TYPE
+            subType = CMD_RPK_INSTALL
+            type = RPK_COMMAND_TYPE
+            fileType = TYPE_RPK
+
         }
     }
 
     private fun parseAsWatchface(): Boolean {
-        if (bytes!![0] != 0x5A.toByte() || bytes!![1] != 0xA5.toByte()) {
-            return false
+        val bytes  =this.bytes!!
+        if (bytes[0] == 90.toByte() && bytes[1] == (-91).toByte()) {
+            id = untilNullTerminator(bytes, 40)
+            val name = untilNullTerminator(bytes, 104)
+            if (id != null && name != null) {
+                return try {
+                    id!!.toInt()
+                    true
+                } catch (e: NumberFormatException) {
+                    false
+                }
+            }
         }
-        id = StringUtils.untilNullTerminator(bytes!!, 0x28)
-        name = StringUtils.untilNullTerminator(bytes!!, 0x68)
-        if (id == null) {
-            return false
-        }
-
-        if (name == null) {
-            return false
-        }
-        try {
-            id!!.toInt()
-        } catch (e: Exception) {
-            return false
-        }
-        return true
+        return false
     }
 
     private fun parseAsFirmware(): Boolean {

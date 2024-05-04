@@ -1,15 +1,20 @@
 package com.github.sky130.suiteki.pro.device.xiaomi
 
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_FIRMWARE_INSTALL
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_RPK_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_UPLOAD_START
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_WATCHFACE_INSTALL
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.RPK_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.UPLOAD_COMMAND_TYPE
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.WATCHFACE_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.logic.ble.InstallStatus
 import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
 import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto
+import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto.Command
 import com.github.sky130.suiteki.pro.util.CheckSums
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.ceil
@@ -24,54 +29,90 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
     fun install() {
         device.scope.launch(Dispatchers.IO) {
             helper.init()
-            withContext(Dispatchers.Main){
-                support.sendCommand(
-                    XiaomiProto.Command.newBuilder().setType(helper.commandType).setSubtype(helper.type)
-                        .setWatchface(
-                            XiaomiProto.Watchface.newBuilder().setWatchfaceInstallStart(
-                                XiaomiProto.WatchfaceInstallStart.newBuilder().setId(helper.id)
-                                    .setSize(helper.bytes!!.size)
-                            )
-                        ).build()
-                )
-            }
+            support.sendCommand(
+                XiaomiProto.Command.newBuilder()
+                    .setType(helper.type)
+                    .setSubtype(helper.subType).apply {
+                        when (helper.type) {
+                            WATCHFACE_COMMAND_TYPE -> {
+                                setWatchface(
+                                    XiaomiProto.Watchface.newBuilder().setWatchfaceInstallStart(
+                                        XiaomiProto.WatchfaceInstallStart.newBuilder()
+                                            .setId(helper.id)
+                                            .setSize(helper.bytes!!.size)
+                                    )
+                                )
+                            }
+
+                            RPK_COMMAND_TYPE -> {
+                                setRpkMessage(
+                                    XiaomiProto.RpkMessage.newBuilder().setRpkInfo(
+                                        XiaomiProto.RpkInfo.newBuilder().setId(helper.id)
+                                            .setSize(helper.bytes!!.size).setUnknown2(3)
+                                    )
+                                )
+                            }
+                        }
+                    }.build()
+            )
+//            Command.newBuilder().rpkI
         }
     }
 
-    fun requestUpload() {
+    private fun requestUpload() {
         support.sendCommand(
-            XiaomiProto.Command.newBuilder().setType(UPLOAD_COMMAND_TYPE)
-                .setSubtype(CMD_UPLOAD_START).setDataUpload(
-                    XiaomiProto.DataUpload.newBuilder().setDataUploadRequest(
-                        XiaomiProto.DataUploadRequest.newBuilder().setType(helper.type).setMd5Sum(
-                            ByteString.copyFrom(
-                                CheckSums.md5(
-                                    fw
-                                )
-                            )
-                        ).setSize(fw.size)
-                    )
+            XiaomiProto.Command.newBuilder()
+                .setType(UPLOAD_COMMAND_TYPE)
+                .setSubtype(CMD_UPLOAD_START)
+                .setDataUpload(
+                    XiaomiProto.DataUpload.newBuilder()
+                        .setDataUploadRequest(
+                            XiaomiProto.DataUploadRequest.newBuilder()
+                                .setType(helper.fileType)
+                                .setMd5Sum(
+                                    ByteString.copyFrom(
+                                        CheckSums.md5(
+                                            fw
+                                        )
+                                    )
+                                ).setSize(fw.size)
+                        )
                 ).build()
         )
     }
 
     fun handleCommand(cmd: XiaomiProto.Command) {
-        if (cmd.subtype != CMD_UPLOAD_START) return
-        val dataUploadAck = cmd.dataUpload.dataUploadAck
-        if (dataUploadAck.unknown2 != 0 || dataUploadAck.resumePosition != 0) {
-            installFailure(0, "Unknown Error")
-            return
-        }
+        if (cmd.type !in listOf(
+                WATCHFACE_COMMAND_TYPE,
+                RPK_COMMAND_TYPE,
+                UPLOAD_COMMAND_TYPE
+            )
+        ) return
+        when (cmd.subtype) {
+            CMD_WATCHFACE_INSTALL, CMD_FIRMWARE_INSTALL, CMD_RPK_INSTALL -> {
+                requestUpload()
+            }
 
-        chunkSize = if (dataUploadAck.hasChunkSize()) {
-            dataUploadAck.chunkSize
-        } else {
-            2048
+            CMD_UPLOAD_START -> {
+                val dataUploadAck = cmd.dataUpload.dataUploadAck
+
+                if (dataUploadAck.unknown2 != 0 || dataUploadAck.resumePosition != 0) {
+                    installFailure(0, "Unknown Error")
+                    return
+                }
+
+                chunkSize = if (dataUploadAck.hasChunkSize()) {
+                    dataUploadAck.chunkSize
+                } else {
+                    2048
+                }
+                doUpload()
+            }
         }
-        doUpload()
     }
 
     private fun doUpload() {
+        SuitekiManager.log("doUpload")
         // type + md5 + size + bytes + crc32
         val buf1 = ByteBuffer.allocate(2 + 16 + 4 + fw.size).order(ByteOrder.LITTLE_ENDIAN)
         val md5 = CheckSums.md5(fw)
@@ -81,7 +122,7 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
         }
 
         buf1.put(0.toByte())
-        buf1.put(helper.type.toByte())
+        buf1.put(helper.subType.toByte())
         buf1.put(md5)
         buf1.putInt(fw.size)
         buf1.put(fw)
@@ -108,6 +149,7 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
                 chunkToSend
             ) {
                 val progress = ((currentPart.toFloat() / totalParts.toFloat()) * 100).toInt()
+                SuitekiManager.log("doUploadProgress", progress)
 
                 if (currentPart >= totalParts) {
                     installSuccess(100)

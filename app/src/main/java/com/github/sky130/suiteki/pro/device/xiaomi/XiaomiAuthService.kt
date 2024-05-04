@@ -6,6 +6,7 @@ import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_DEVICE_INFO
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_DEVICE_STATE_GET
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.SYSTEM_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.logic.ble.DeviceStatus
+import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
 import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto
 import com.github.sky130.suiteki.pro.proto.xiaomi.XiaomiProto.Command
 import com.github.sky130.suiteki.pro.util.BytesUtils
@@ -229,11 +230,11 @@ class XiaomiAuthService(val device: XiaomiDevice) {
     }
 
     fun handleCommand(cmd: Command) {
-        require(cmd.type == COMMAND_TYPE || cmd.type == SYSTEM_COMMAND_TYPE) { "Not an useful command" }
-
+        if (cmd.type != COMMAND_TYPE) return
+        SuitekiManager.log("cmd.type != COMMAND_TYPE", cmd.type != COMMAND_TYPE)
         when (cmd.subtype) {
             CMD_NONCE -> {
-                val command = handleWatchNonce(cmd.auth.watchNonce) ?: return
+                val command = handleWatchNonce(cmd.auth.watchNonce) ?: return SuitekiManager.log("handleWatchNonce is null")
                 sendCommand(command)
             }
 
@@ -254,9 +255,8 @@ class XiaomiAuthService(val device: XiaomiDevice) {
     private fun initialize() {
         device.support.apply {
             sendCommand(SYSTEM_COMMAND_TYPE, CMD_DEVICE_INFO)
-            sendCommand(SYSTEM_COMMAND_TYPE, CMD_DEVICE_STATE_GET)
-            sendCommand(SYSTEM_COMMAND_TYPE, CMD_BATTERY)
         }
+        device.onAuth()
     }
 
 
