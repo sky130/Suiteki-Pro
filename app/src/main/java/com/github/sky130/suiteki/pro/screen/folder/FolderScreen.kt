@@ -2,10 +2,13 @@ package com.github.sky130.suiteki.pro.screen.folder
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +20,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.FolderZip
+import androidx.compose.material.icons.outlined.FolderZip
+import androidx.compose.material.icons.outlined.UploadFile
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -60,19 +72,33 @@ fun FolderScreen(
 
     fun File.refresh() {
         fileList.clear()
-        fileList.addAll(listFiles().toMutableList())
+        fileList.addAll(listFiles().filter {
+            it.isDirectory || it.extension.lowercase() in listOf(
+                "rpk",
+                "bin",
+                "zip",
+                "face"
+            )
+        }.sortedWith(compareBy<File> { it.isDirectory }.thenBy { it.name }))
     }
-
 
     LaunchedEffect(Unit) {
         files.last().refresh()
     }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text(text = "选择文件") })
+        TopAppBar(title = { Text(text = "选择文件") }, navigationIcon = {
+            IconButton(onClick = { resultNavigator.navigateBack() }) {
+                Icon(Icons.AutoMirrored.Default.ArrowBack, null)
+            }
+        })
     }) {
         Box(modifier = Modifier.padding(it)) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 10.dp)
+            ) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     itemsIndexed(files) { index, item ->
                         OutlinedCard(
@@ -97,13 +123,16 @@ fun FolderScreen(
                     }
                 }
                 Column(
-                    modifier = Modifier.fillMaxHeight()
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(top = 10.dp)
                 ) {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
                         items(fileList) {
-                            OutlinedCard(onClick = {
+                            ElevatedCard(onClick = {
                                 if (it.isDirectory) {
                                     files.add(it)
                                     it.refresh()
@@ -111,8 +140,16 @@ fun FolderScreen(
                                     Log.d("TAG", "put result ${it.name}")
                                     resultNavigator.navigateBack(result = it)
                                 }
-                            }, modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.padding(10.dp)) {
+                            }, modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                                Row(modifier = Modifier.padding(10.dp)) {
+                                    Icon(
+                                        if (it.isDirectory) {
+                                            Icons.Default.FolderOpen
+                                        } else {
+                                            Icons.Outlined.UploadFile
+                                        }, null
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
                                     Text(text = it.name)
                                 }
                             }

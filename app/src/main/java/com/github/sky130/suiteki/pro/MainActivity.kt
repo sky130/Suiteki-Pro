@@ -32,7 +32,8 @@ import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.generated.NavGraphs
 
-class MainActivity : SuitekiActivity() {
+class
+MainActivity : SuitekiActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable

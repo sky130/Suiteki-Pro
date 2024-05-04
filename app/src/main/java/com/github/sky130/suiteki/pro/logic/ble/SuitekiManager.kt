@@ -27,6 +27,12 @@ object SuitekiManager {
         })
     }
 
+    fun waitForAuth() = if (bleDevice.value?.status?.value == DeviceStatus.Connected){
+        Unit
+    }else{
+        null
+    }
+
     fun connect(device: Device) {
         for ((i, p) in classMap) {
             if (i.toRegex().matches(device.name)) {

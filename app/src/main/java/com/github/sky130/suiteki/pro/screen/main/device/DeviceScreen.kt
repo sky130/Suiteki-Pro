@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -63,7 +64,7 @@ fun DeviceScreen() {
                 modifier = Modifier.padding(horizontal = 10.dp)
             ) {
                 items(list) {
-                    Card(onClick = {
+                    ElevatedCard(onClick = {
                         SuitekiManager.connect(it)
                     }) {
                         Column(

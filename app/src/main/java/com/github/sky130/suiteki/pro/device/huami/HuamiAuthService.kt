@@ -37,7 +37,7 @@ class HuamiAuthService(private val device: HuamiDevice) {
         huamiWrite(0x0082.toShort(), sendPubkeyCommand, true, false)
     }
 
-    private fun huamiWrite(
+    fun huamiWrite(
         type: Short, data: ByteArray, extendedFlags: Boolean,
         encrypt: Boolean,
     ) {
@@ -185,7 +185,7 @@ class HuamiAuthService(private val device: HuamiDevice) {
             }
             try {
                 val finalBuf = buf
-                Thread { handle2021Payload(currentType.toShort(), finalBuf) }.start()
+                handle2021Payload(currentType.toShort(), finalBuf)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -195,6 +195,7 @@ class HuamiAuthService(private val device: HuamiDevice) {
     }
 
     private fun handle2021Payload(type: Short, payload: ByteArray) {
+        device.handlePayload(payload)
         if (payload[0].toInt() == 0x10 && payload[1].toInt() == 0x04 && payload[2].toInt() == 0x01) {
             System.arraycopy(payload, 3, remoteRandom, 0, 16)
             System.arraycopy(payload, 19, remotePublicEC, 0, 48)
@@ -224,6 +225,7 @@ class HuamiAuthService(private val device: HuamiDevice) {
             }
         } else if (payload[0].toInt() == 0x10 && payload[1].toInt() == 0x05 && payload[2].toInt() == 0x01) {
             device.status.value = DeviceStatus.Connected
+            device.onAuth()
             return
         } else {
             if (device.status.value == DeviceStatus.Authing) device.status.value =

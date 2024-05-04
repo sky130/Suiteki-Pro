@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AppRegistration
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FolderOpen
@@ -45,10 +46,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import com.github.sky130.suiteki.pro.logic.ble.DeviceStatus
 import com.github.sky130.suiteki.pro.logic.ble.InstallStatus
+import com.github.sky130.suiteki.pro.logic.ble.InstallStatus.*
 import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager
+import com.github.sky130.suiteki.pro.logic.ble.SuitekiManager.waitForAuth
 import com.github.sky130.suiteki.pro.screen.main.ExternalNavigator
 import com.github.sky130.suiteki.pro.screen.main.MainGraph
 import com.github.sky130.suiteki.pro.screen.main.more.AppCard
@@ -57,11 +61,13 @@ import com.github.sky130.suiteki.pro.ui.widget.SuitekiDialog
 import com.github.sky130.suiteki.pro.ui.widget.SuitekiScaffold
 import com.github.sky130.suiteki.pro.ui.widget.SuitekiTopBar
 import com.github.sky130.suiteki.pro.ui.widget.rememberDialogState
+import com.github.sky130.suiteki.pro.util.TextUtils.copyText
 import com.hitanshudhawan.circularprogressbar.CircularProgressBar
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.NavGraph
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.NavGraphs
+import com.ramcosta.composedestinations.generated.destinations.AppScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.FolderScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.rememberNavHostEngine
@@ -106,15 +112,7 @@ fun HomeScreen(
         ) {
             val ble by SuitekiManager.bleDevice.collectAsState(null)
             if (ble == null) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(Icons.Outlined.Block, null, modifier = Modifier.size(100.dp))
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text("请先选择设备", style = MaterialTheme.typography.headlineMedium)
-                }
+                DisconnectScreen()
             } else {
                 ble?.let {
                     val authStatus by it.status.collectAsState(DeviceStatus.Waiting)
@@ -157,6 +155,7 @@ fun HomeScreen(
                                 "安装",
                                 Icons.Default.FolderOpen
                             ) {
+                                waitForAuth() ?: return@AppCard
                                 navigator.navigator.navigate(FolderScreenDestination)
                             }
                         }
@@ -169,6 +168,16 @@ fun HomeScreen(
                                 visible.show()
                             }
                         }
+                        item {
+                            AppCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                "应用管理",
+                                Icons.Default.AppRegistration
+                            ) {
+                                waitForAuth() ?: return@AppCard
+                                navigator.navigator.navigate(AppScreenDestination)
+                            }
+                        }
                     }
                 }
             }
@@ -177,10 +186,23 @@ fun HomeScreen(
 }
 
 @Composable
+fun DisconnectScreen() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(Icons.Outlined.Block, null, modifier = Modifier.size(100.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        Text("请先选择设备", style = MaterialTheme.typography.headlineMedium)
+    }
+}
+
+@Composable
 fun InstallDialog(state: DialogState, log: DialogState) {
     SuitekiDialog(state = state, title = "安装文件", onDismissRequest = { }) {
         LaunchedEffect(Unit) {
-            SuitekiManager.installStatus.value = InstallStatus.Nope
+            SuitekiManager.installStatus.value = Nope
         }
         val status by SuitekiManager.installStatus
         Column(
@@ -200,12 +222,27 @@ fun InstallDialog(state: DialogState, log: DialogState) {
                 startAngle = 0f,
             )
             Spacer(modifier = Modifier.height(15.dp))
-            Button(onClick = { log.show() }) {
-                Text(text = "日志")
+            when (status) {
+                is InstallSuccess -> {
+                    Text(text = "安装完成", style = MaterialTheme.typography.titleLarge)
+                }
+
+                is InstallFailure -> {
+                    Text(text = "安装失败", style = MaterialTheme.typography.titleLarge)
+                    Text(text = (status as InstallFailure).message, style = MaterialTheme.typography.titleMedium)
+
+                }
+
+                is Installing -> {
+                    Text(text = "${status.progress}%", style = MaterialTheme.typography.titleLarge)
+                }
+
+                Nope -> {}
             }
-            Spacer(modifier = Modifier.height(15.dp))
-            Button(onClick = { state.dismiss() }) {
-                Text(text = "退出")
+            if (status is InstallSuccess || status is InstallFailure) {
+                Button(onClick = { state.dismiss() }, modifier = Modifier.padding(top = 15.dp)) {
+                    Text(text = "返回")
+                }
             }
         }
     }
@@ -225,22 +262,25 @@ fun SimpleChip(onClick: () -> Unit, icon: ImageVector, label: String) {
 
 @Composable
 fun DeviceDialog(state: DialogState) {
+    val list = remember {
+        SuitekiManager.logList
+    }
     SuitekiDialog(
         state = state,
         onDismissRequest = {},
         button = {
-
             OutlinedButton(onClick = { state.dismiss() }) {
                 Text(text = "取消")
+            }
+            OutlinedButton(onClick = { list.joinToString("\n\n").copyText() }) {
+                Text(text = "复制")
             }
         },
         icon = Icons.Filled.Watch,
         title = "设备日志",
     ) {
 
-        val list = remember {
-            SuitekiManager.logList
-        }
+
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(15.dp)

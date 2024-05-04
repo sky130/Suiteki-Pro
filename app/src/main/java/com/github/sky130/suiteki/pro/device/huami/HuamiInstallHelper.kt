@@ -80,6 +80,12 @@ class HuamiInstallHelper(val device: HuamiDevice, val bytes: ByteArray) {
                 return
             }
 
+            "10D656" -> {
+                installFailure("不支持的文件")
+                //空间不足
+                return
+            }
+
             "10D301" -> {
                 install()
                 return
@@ -107,6 +113,7 @@ class HuamiInstallHelper(val device: HuamiDevice, val bytes: ByteArray) {
                         return doPerform()
                     }
                 }
+                installFailure("未知原因\n${BytesUtils.bytesToHexStr(bytes)}")
                 // 安装失败
                 return
 
