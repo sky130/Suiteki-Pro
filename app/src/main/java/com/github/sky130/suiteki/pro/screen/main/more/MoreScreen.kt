@@ -2,6 +2,7 @@ package com.github.sky130.suiteki.pro.screen.main.more
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,13 +20,16 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Help
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LogoDev
 import androidx.compose.material.icons.filled.Watch
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LogoDev
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -55,6 +59,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.sky130.suiteki.pro.MainApplication
 import com.github.sky130.suiteki.pro.R
 import com.github.sky130.suiteki.pro.logic.database.AppDatabase
 import com.github.sky130.suiteki.pro.logic.database.model.Device
@@ -93,6 +98,7 @@ val flow = flow {
 fun MoreScreen() {
     val logDialogState = rememberDialogState()
     val aboutDialogState = rememberDialogState()
+    val helpDialogState = rememberDialogState()
 
     var hitokotoIndex by remember { mutableIntStateOf(0) }
     var text by remember { mutableStateOf("") }
@@ -105,6 +111,7 @@ fun MoreScreen() {
     }) {
         LogDialog(logDialogState)
         AboutDialog(aboutDialogState)
+        HelpDialog(helpDialogState)
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedCard(
                 onClick = {
@@ -128,22 +135,32 @@ fun MoreScreen() {
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item {
-                    AppCard(Modifier, "日志", Icons.Outlined.LogoDev) {
+                    AppCard(Modifier, "日志", Icons.Outlined.Code) {
                         logDialogState.show()
                     }
                 }
 
                 item {
-                    AppCard(Modifier, "帮助", Icons.AutoMirrored.Outlined.Help) {}
+                    AppCard(Modifier, "帮助", Icons.AutoMirrored.Outlined.HelpOutline) {
+                        helpDialogState.show()
+                    }
                 }
 
                 item {
-                    AppCard(Modifier, "设置", Icons.Outlined.Settings) {}
+                    AppCard(Modifier, "设置", Icons.Outlined.Settings) {
+
+                    }
                 }
 
                 item {
                     AppCard(Modifier, "关于", Icons.Outlined.Info) {
                         aboutDialogState.show()
+                    }
+                }
+
+                item {
+                    AppCard(Modifier, "更新", Icons.Outlined.Update) {
+                        MainApplication.openUrl("https://akidepot.com/s/X0Jtx")
                     }
                 }
             }
@@ -198,6 +215,29 @@ fun AboutDialog(state: DialogState) {
 }
 
 @Composable
+fun HelpDialog(state: DialogState) {
+    BaseSuitekiDialog(state = state, onDismissRequest = {
+        state.dismiss()
+    }, confirmButton = {
+        Button(onClick = { MainApplication.openUrl("https://www.bandbbs.cn/threads/11107/") }) {
+            Text(text = "更多帮助")
+        }
+        Button(onClick = { state.dismiss() }) {
+            Text(text = "返回")
+        }
+    }, text = {
+
+        Column {
+            Text(text = "软件目前不适用于小白上手")
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(text = "蓝牙名称一定要填写完整的设备名称!!!")
+        }
+
+    })
+}
+
+
+@Composable
 fun AboutScreen() {
     Row(
         modifier = Modifier
@@ -206,7 +246,7 @@ fun AboutScreen() {
             painter = painterResource(id = R.drawable.ic_suiteki),
             contentDescription = null,
             modifier = Modifier
-                .background(SuitekiColor, CircleShape)
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
                 .padding(20.dp)
                 .size(23.dp),
             tint = MaterialTheme.colorScheme.onPrimary
@@ -217,11 +257,18 @@ fun AboutScreen() {
             Text(
                 text = "Suiteki",
                 style = TextStyle(fontSize = 25.sp),
-                color = SuitekiColor
+                color = MaterialTheme.colorScheme.primary
             )
             Text(text = "by Sky233", style = TextStyle(fontSize = 18.sp))
             Spacer(modifier = Modifier.height(5.dp))
             Text(text = "Thanks for Gadgetbridget and You", style = TextStyle(fontSize = 15.sp))
+            Spacer(modifier = Modifier.height(5.dp))
+
+            Text(
+                text = "Github",
+                style = TextStyle(fontSize = 15.sp), color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable { MainApplication.openUrl("https://github.com/sky130/Suiteki-Pro") })
+
         }
     }
 }

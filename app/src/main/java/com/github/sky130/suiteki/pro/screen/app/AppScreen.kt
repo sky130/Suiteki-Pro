@@ -16,8 +16,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Launch
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -39,7 +41,13 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 @Composable
 @Destination<RootGraph>
 fun AppScreen(navigator: DestinationsNavigator) {
-    Scaffold(topBar = {
+    val device by SuitekiManager.bleDevice.collectAsState()
+
+    Scaffold(floatingActionButton = {
+        FloatingActionButton(onClick = { device?.requestAppList() }) {
+            Icon(Icons.Default.Refresh, contentDescription = null)
+        }
+    }, topBar = {
         TopAppBar(title = { Text("应用管理") }, navigationIcon = {
             IconButton(onClick = { navigator.popBackStack() }) {
                 Icon(Icons.AutoMirrored.Default.ArrowBack, null)
@@ -52,7 +60,6 @@ fun AppScreen(navigator: DestinationsNavigator) {
                 .fillMaxSize()
                 .padding(horizontal = 10.dp)
         ) {
-            val device by SuitekiManager.bleDevice.collectAsState()
             if (device == null) {
                 DisconnectScreen()
             } else {
