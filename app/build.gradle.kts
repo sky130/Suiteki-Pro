@@ -144,6 +144,9 @@ afterEvaluate {
     tasks.named("kspReleaseKotlin") {
         dependsOn(":app:generateDebugProto")
     }
+    tasks.named(":app:generateReleaseProto") {
+        dependsOn(":app:compileDebugJavaWithJavac")
+    }
 }
 
 
