@@ -132,6 +132,11 @@ protobuf {
         }
     }
 }
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("-Xlint:none")
+}
+
 afterEvaluate {
     tasks.named("kspDebugKotlin") {
         dependsOn(":app:generateDebugProto")
