@@ -63,8 +63,8 @@ android {
         }
     }
     sourceSets {
-//        this["release"].java.srcDir(protobuf.generatedFilesBaseDir)
-//        this["debug"].java.srcDir(protobuf.generatedFilesBaseDir)
+        this["release"].java.srcDir(protobuf.generatedFilesBaseDir)
+        this["debug"].java.srcDir(protobuf.generatedFilesBaseDir)
     }
 }
 
@@ -132,4 +132,14 @@ protobuf {
         }
     }
 }
+afterEvaluate {
+    tasks.named("kspDebugKotlin") {
+        dependsOn(":app:generateDebugProto")
+    }
+    tasks.named("kspReleaseKotlin") {
+        dependsOn(":app:generateDebugProto")
+    }
+}
+
+
 
