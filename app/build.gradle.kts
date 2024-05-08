@@ -134,7 +134,11 @@ protobuf {
 }
 
 tasks.withType<JavaCompile> {
-    options.compilerArgs.add("-Xlint:none")
+    options.compilerArgs.apply{
+        add("-Xlint:deprecation")
+        add("-Xlint:none")
+    }
+
 }
 
 afterEvaluate {
