@@ -150,6 +150,9 @@ afterEvaluate {
     tasks.named("generateDebugLintReportModel") {
         dependsOn("generateReleaseProto")
     }
+    tasks.named("lintAnalyzeDebug") {
+        dependsOn("generateReleaseProto")
+    }
 }
 
 
