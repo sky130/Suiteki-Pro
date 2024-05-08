@@ -142,10 +142,13 @@ afterEvaluate {
         dependsOn("generateDebugProto")
     }
     tasks.named("kspReleaseKotlin") {
-        dependsOn("generateDebugProto")
+        dependsOn("generateReleaseProto")
     }
     tasks.named("generateReleaseProto") {
         dependsOn("compileDebugJavaWithJavac")
+    }   
+    tasks.named("generateDebugLintReportModel") {
+        dependsOn("generateReleaseProto")
     }
 }
 
