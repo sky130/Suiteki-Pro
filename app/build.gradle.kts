@@ -106,7 +106,7 @@ dependencies {
 
     implementation(libs.flexible.bottomsheet.material3)
 
-    implementation(libs.protobuf.java.lite)
+    implementation(libs.protobuf.java)
 
     implementation(libs.compose.destinations.core)
     ksp(libs.compose.destinations.ksp)
