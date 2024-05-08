@@ -139,13 +139,13 @@ tasks.withType<JavaCompile> {
 
 afterEvaluate {
     tasks.named("kspDebugKotlin") {
-        dependsOn(":app:generateDebugProto")
+        dependsOn("generateDebugProto")
     }
     tasks.named("kspReleaseKotlin") {
-        dependsOn(":app:generateDebugProto")
+        dependsOn("generateDebugProto")
     }
-    tasks.named(":app:generateReleaseProto") {
-        dependsOn(":app:compileDebugJavaWithJavac")
+    tasks.named("generateReleaseProto") {
+        dependsOn("compileDebugJavaWithJavac")
     }
 }
 
