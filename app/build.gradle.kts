@@ -138,7 +138,7 @@ tasks.withType<JavaCompile> {
         add("-Xlint:deprecation")
         add("-Xlint:none")
     }
-    options.warnings = false
+    options.isWarnings = false
 }
 
 afterEvaluate {
