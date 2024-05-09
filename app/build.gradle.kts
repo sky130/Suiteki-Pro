@@ -63,7 +63,7 @@ android {
         }
     }
     sourceSets {
-        this["release"].java.srcDir(protobuf.generatedFilesBaseDir)
+        // this["release"].java.srcDir(protobuf.generatedFilesBaseDir)
         this["debug"].java.srcDir(protobuf.generatedFilesBaseDir)
     }
 }
