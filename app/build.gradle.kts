@@ -16,7 +16,7 @@ android {
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0-Dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -115,7 +115,13 @@ dependencies {
 
     implementation(libs.permission.flow.compose)
 
+    implementation(libs.microsoft.appcenter.analytics)
+    implementation(libs.microsoft.appcenter.crashes)
+
+
+
     implementation(files("lib/Bouncycastle.jar"))
+    implementation(kotlin("reflect"))
 }
 
 

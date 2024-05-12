@@ -1,7 +1,14 @@
 package com.github.sky130.suiteki.pro.util
 
 import java.nio.ByteBuffer
+import java.security.MessageDigest
 import java.util.zip.CRC32
+import kotlin.text.Charsets.UTF_8
+
+fun ByteArray.toHex() = joinToString(separator = "") { byte -> "%02x".format(byte) }
+
+fun hashBytes(data: ByteArray, algorithm: String): ByteArray =
+    MessageDigest.getInstance(algorithm).digest(data)
 
 object BytesUtils {
     const val WATCHFACE = 0
@@ -10,6 +17,8 @@ object BytesUtils {
     fun hexToInt(hex: String): Int {
         return hex.toInt(16)
     }
+
+
 
     fun getSecretKey(key: String): ByteArray {
         val authKeyBytes = byteArrayOf(

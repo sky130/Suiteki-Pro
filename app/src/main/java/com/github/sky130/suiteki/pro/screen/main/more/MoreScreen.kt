@@ -21,10 +21,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Help
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LogoDev
 import androidx.compose.material.icons.filled.Watch
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LogoDev
@@ -40,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +63,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.sky130.suiteki.pro.MainApplication
+import com.github.sky130.suiteki.pro.MainApplication.Companion.context
+import com.github.sky130.suiteki.pro.MainApplication.Companion.copy
+import com.github.sky130.suiteki.pro.MainApplication.Companion.toast
 import com.github.sky130.suiteki.pro.R
 import com.github.sky130.suiteki.pro.logic.database.AppDatabase
 import com.github.sky130.suiteki.pro.logic.database.model.Device
@@ -99,6 +105,7 @@ fun MoreScreen() {
     val logDialogState = rememberDialogState()
     val aboutDialogState = rememberDialogState()
     val helpDialogState = rememberDialogState()
+    val chatDialogState = rememberDialogState()
 
     var hitokotoIndex by remember { mutableIntStateOf(0) }
     var text by remember { mutableStateOf("") }
@@ -112,6 +119,7 @@ fun MoreScreen() {
         LogDialog(logDialogState)
         AboutDialog(aboutDialogState)
         HelpDialog(helpDialogState)
+        ChatDialog(chatDialogState)
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedCard(
                 onClick = {
@@ -148,7 +156,7 @@ fun MoreScreen() {
 
                 item {
                     AppCard(Modifier, "设置", Icons.Outlined.Settings) {
-
+                        "未开放".toast()
                     }
                 }
 
@@ -161,6 +169,12 @@ fun MoreScreen() {
                 item {
                     AppCard(Modifier, "更新", Icons.Outlined.Update) {
                         MainApplication.openUrl("https://akidepot.com/s/X0Jtx")
+                    }
+                }
+
+                item {
+                    AppCard(Modifier, "进群交流", Icons.Outlined.ChatBubbleOutline) {
+                        chatDialogState.show()
                     }
                 }
             }
@@ -188,6 +202,39 @@ fun LogDialog(state: DialogState) {
     })
 }
 
+@Composable
+fun ChatDialog(state: DialogState) {
+    if (!state.visible.value) return
+    AlertDialog(
+        onDismissRequest = {
+            state.dismiss()
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                state.dismiss()
+            }) {
+                Text(text = "关闭")
+            }
+        },
+        icon = { Icon(Icons.Filled.ChatBubbleOutline, null) },
+        title = { Text(text = "进群交流") },
+        text = {
+            Column {
+                Text(text = "Suiteki#1群")
+                Text(
+                    text = "648849444",
+                    style = TextStyle(fontSize = 15.sp), color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { "648849444".copy() })
+                Text(text = "Suiteki#2群")
+                Text(
+                    text = "758323879",
+                    style = TextStyle(fontSize = 15.sp), color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { "758323879".copy() })
+                Text(text = "点击复制，1群尚未开放")
+            }
+        }
+    )
+}
 
 @Composable
 fun AppCard(modifier: Modifier = Modifier, title: String, icon: ImageVector, onClick: () -> Unit) {
@@ -218,19 +265,27 @@ fun AboutDialog(state: DialogState) {
 fun HelpDialog(state: DialogState) {
     BaseSuitekiDialog(state = state, onDismissRequest = {
         state.dismiss()
-    }, confirmButton = {
-        Button(onClick = { MainApplication.openUrl("https://www.bandbbs.cn/threads/11107/") }) {
+    }, icon = {
+        Icon(
+            imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+            contentDescription = null
+        )}, confirmButton = {
+        TextButton(onClick = { MainApplication.openUrl("https://www.bandbbs.cn/threads/11107/") }) {
             Text(text = "更多帮助")
         }
-        Button(onClick = { state.dismiss() }) {
+        TextButton(onClick = { state.dismiss() }) {
             Text(text = "返回")
         }
-    }, text = {
+    }, title = { Text(text = "帮助")}, text = {
 
         Column {
             Text(text = "软件目前不适用于小白上手")
             Spacer(modifier = Modifier.height(5.dp))
             Text(text = "蓝牙名称一定要填写完整的设备名称!!!")
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(text = "定时检查更新!!!")
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(text = "使用软件有风险!!!刷环需要谨慎!!!")
         }
 
     })
@@ -242,6 +297,10 @@ fun AboutScreen() {
     Row(
         modifier = Modifier
     ) {
+        val versionName = remember {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }
+
         Icon(
             painter = painterResource(id = R.drawable.ic_suiteki),
             contentDescription = null,
@@ -255,11 +314,12 @@ fun AboutScreen() {
         Column {
             Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text = "Suiteki",
+                text = "Suiteki Pro",
                 style = TextStyle(fontSize = 25.sp),
                 color = MaterialTheme.colorScheme.primary
             )
             Text(text = "by Sky233", style = TextStyle(fontSize = 18.sp))
+            Text(text = versionName, style = TextStyle(fontSize = 18.sp))
             Spacer(modifier = Modifier.height(5.dp))
             Text(text = "Thanks for Gadgetbridget and You", style = TextStyle(fontSize = 15.sp))
             Spacer(modifier = Modifier.height(5.dp))

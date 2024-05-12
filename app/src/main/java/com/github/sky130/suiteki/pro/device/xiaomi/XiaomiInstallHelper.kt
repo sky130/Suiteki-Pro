@@ -5,6 +5,7 @@ import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_RPK_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_UPLOAD_START
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_WATCHFACE_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.RPK_COMMAND_TYPE
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_FIRMWARE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.UPLOAD_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.WATCHFACE_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.logic.ble.InstallStatus
@@ -29,17 +30,32 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
     fun install() {
         device.scope.launch(Dispatchers.IO) {
             helper.init()
+            if (helper.fileType == TYPE_FIRMWARE) {
+                support.sendCommand(
+                    XiaomiProto.Command.newBuilder()
+                        .setSystem(
+                            XiaomiProto.System.newBuilder()
+                                .setFirmwareInstallRequest(
+                                    XiaomiProto.FirmwareInstallRequest.newBuilder()
+                                        .setUnknown1(0)
+                                        .setUnknown2(0)
+                                        .setVersion(helper.versionName)
+                                        .setMd5(helper.md5)
+                                        .build()
+                                ).build()
+                        ).build()
+                )
+                return@launch
+            }
             support.sendCommand(
-                XiaomiProto.Command.newBuilder()
-                    .setType(helper.type)
-                    .setSubtype(helper.subType).apply {
+                XiaomiProto.Command.newBuilder().setType(helper.type).setSubtype(helper.subType)
+                    .apply {
                         when (helper.type) {
                             WATCHFACE_COMMAND_TYPE -> {
                                 setWatchface(
                                     XiaomiProto.Watchface.newBuilder().setWatchfaceInstallStart(
                                         XiaomiProto.WatchfaceInstallStart.newBuilder()
-                                            .setId(helper.id)
-                                            .setSize(helper.bytes!!.size)
+                                            .setId(helper.id).setSize(helper.bytes!!.size)
                                     )
                                 )
                             }
@@ -61,31 +77,25 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
 
     private fun requestUpload() {
         support.sendCommand(
-            XiaomiProto.Command.newBuilder()
-                .setType(UPLOAD_COMMAND_TYPE)
-                .setSubtype(CMD_UPLOAD_START)
-                .setDataUpload(
-                    XiaomiProto.DataUpload.newBuilder()
-                        .setDataUploadRequest(
-                            XiaomiProto.DataUploadRequest.newBuilder()
-                                .setType(helper.fileType)
-                                .setMd5Sum(
-                                    ByteString.copyFrom(
-                                        CheckSums.md5(
-                                            fw
-                                        )
+            XiaomiProto.Command.newBuilder().setType(UPLOAD_COMMAND_TYPE)
+                .setSubtype(CMD_UPLOAD_START).setDataUpload(
+                    XiaomiProto.DataUpload.newBuilder().setDataUploadRequest(
+                        XiaomiProto.DataUploadRequest.newBuilder().setType(helper.fileType)
+                            .setMd5Sum(
+                                ByteString.copyFrom(
+                                    CheckSums.md5(
+                                        fw
                                     )
-                                ).setSize(fw.size)
-                        )
+                                )
+                            ).setSize(fw.size)
+                    )
                 ).build()
         )
     }
 
     fun handleCommand(cmd: XiaomiProto.Command) {
         if (cmd.type !in listOf(
-                WATCHFACE_COMMAND_TYPE,
-                RPK_COMMAND_TYPE,
-                UPLOAD_COMMAND_TYPE
+                WATCHFACE_COMMAND_TYPE, RPK_COMMAND_TYPE, UPLOAD_COMMAND_TYPE
             )
         ) return
         when (cmd.subtype) {

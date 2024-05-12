@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 package com.github.sky130.suiteki.pro.device.xiaomi
 
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_FIRMWARE_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_RPK_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_WATCHFACE_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.RPK_COMMAND_TYPE
@@ -23,8 +24,11 @@ import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_FIRMWARE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_RPK
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_WATCHFACE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.WATCHFACE_COMMAND_TYPE
+import com.github.sky130.suiteki.pro.util.BytesUtils
 import com.github.sky130.suiteki.pro.util.StringUtils.untilNullTerminator
 import com.github.sky130.suiteki.pro.util.ZipUtils
+import com.github.sky130.suiteki.pro.util.hashBytes
+import com.github.sky130.suiteki.pro.util.toHex
 import org.json.JSONObject
 import java.io.File
 
@@ -46,10 +50,11 @@ class XiaomiFWHelper(var bytes: ByteArray?) {
         private set
     var versionCode: Int? = null
         private set
+    var md5: String? = null
+        private set
 
 
-
-    fun init(){
+    fun init() {
         parseBytes()
     }
 
@@ -66,21 +71,20 @@ class XiaomiFWHelper(var bytes: ByteArray?) {
             subType = CMD_WATCHFACE_INSTALL
             type = WATCHFACE_COMMAND_TYPE
             fileType = TYPE_WATCHFACE
-
         } else if (parseAsFirmware()) {
             checkNotNull(versionName)
             fileType = TYPE_FIRMWARE
-            // TODO _commandType = TYPE_FIRMWARE
+            type = CMD_FIRMWARE_INSTALL
+            subType = TYPE_FIRMWARE
         } else if (parseAsRpk()) {
             subType = CMD_RPK_INSTALL
             type = RPK_COMMAND_TYPE
             fileType = TYPE_RPK
-
         }
     }
 
     private fun parseAsWatchface(): Boolean {
-        val bytes  =this.bytes!!
+        val bytes = this.bytes!!
         if (bytes[0] == 90.toByte() && bytes[1] == (-91).toByte()) {
             id = untilNullTerminator(bytes, 40)
             val name = untilNullTerminator(bytes, 104)
@@ -97,8 +101,13 @@ class XiaomiFWHelper(var bytes: ByteArray?) {
     }
 
     private fun parseAsFirmware(): Boolean {
-        // TODO parse and set version
-        return false
+        val start = listOf<Byte>(96, 90, 90, 126)
+        for ((i, b) in start.withIndex()) {
+            if (bytes!![i] != b) return false
+        }
+        versionName = bytes!!.decodeToString(4, 11)
+        md5 = hashBytes(bytes!!, "MD5").toHex()
+        return true
     }
 
     private fun parseAsRpk(): Boolean {
