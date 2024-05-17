@@ -98,8 +98,10 @@ fun HomeScreen(
         }
     }
     val visible = rememberDialogState()
+
     DeviceDialog(visible)
     InstallDialog(state = installDialogState, visible)
+
     SuitekiScaffold(
         topBar = {
             SuitekiTopBar(title = "主页")
@@ -238,6 +240,9 @@ fun InstallDialog(state: DialogState, log: DialogState) {
                 }
 
                 Nope -> {}
+            }
+            Button(onClick = { log.show() }, modifier = Modifier.padding(top = 15.dp)) {
+                Text(text = "日志")
             }
             if (status is InstallSuccess || status is InstallFailure) {
                 Button(onClick = { state.dismiss() }, modifier = Modifier.padding(top = 15.dp)) {

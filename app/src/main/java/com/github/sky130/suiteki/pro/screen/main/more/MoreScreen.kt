@@ -183,6 +183,9 @@ fun MoreScreen() {
 }
 
 
+
+
+
 @Composable
 fun LogDialog(state: DialogState) {
     if (!state.visible.value) return
@@ -205,10 +208,9 @@ fun LogDialog(state: DialogState) {
 @Composable
 fun ChatDialog(state: DialogState) {
     if (!state.visible.value) return
-    AlertDialog(
-        onDismissRequest = {
-            state.dismiss()
-        },
+    AlertDialog(onDismissRequest = {
+        state.dismiss()
+    },
         confirmButton = {
             TextButton(onClick = {
                 state.dismiss()
@@ -221,19 +223,18 @@ fun ChatDialog(state: DialogState) {
         text = {
             Column {
                 Text(text = "Suiteki#1群")
-                Text(
-                    text = "648849444",
-                    style = TextStyle(fontSize = 15.sp), color = MaterialTheme.colorScheme.primary,
+                Text(text = "648849444",
+                    style = TextStyle(fontSize = 15.sp),
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable { "648849444".copy() })
                 Text(text = "Suiteki#2群")
-                Text(
-                    text = "758323879",
-                    style = TextStyle(fontSize = 15.sp), color = MaterialTheme.colorScheme.primary,
+                Text(text = "758323879",
+                    style = TextStyle(fontSize = 15.sp),
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable { "758323879".copy() })
                 Text(text = "点击复制，1群尚未开放")
             }
-        }
-    )
+        })
 }
 
 @Composable
@@ -255,8 +256,7 @@ fun AppCard(modifier: Modifier = Modifier, title: String, icon: ImageVector, onC
 fun AboutDialog(state: DialogState) {
     BaseSuitekiDialog(state = state, onDismissRequest = {
         state.dismiss()
-    }, confirmButton = {
-    }, text = {
+    }, confirmButton = {}, text = {
         AboutScreen()
     })
 }
@@ -267,16 +267,16 @@ fun HelpDialog(state: DialogState) {
         state.dismiss()
     }, icon = {
         Icon(
-            imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-            contentDescription = null
-        )}, confirmButton = {
+            imageVector = Icons.AutoMirrored.Outlined.HelpOutline, contentDescription = null
+        )
+    }, confirmButton = {
         TextButton(onClick = { MainApplication.openUrl("https://www.bandbbs.cn/threads/11107/") }) {
             Text(text = "更多帮助")
         }
         TextButton(onClick = { state.dismiss() }) {
             Text(text = "返回")
         }
-    }, title = { Text(text = "帮助")}, text = {
+    }, title = { Text(text = "帮助") }, text = {
 
         Column {
             Text(text = "软件目前不适用于小白上手")
@@ -324,9 +324,9 @@ fun AboutScreen() {
             Text(text = "Thanks for Gadgetbridget and You", style = TextStyle(fontSize = 15.sp))
             Spacer(modifier = Modifier.height(5.dp))
 
-            Text(
-                text = "Github",
-                style = TextStyle(fontSize = 15.sp), color = MaterialTheme.colorScheme.primary,
+            Text(text = "Github",
+                style = TextStyle(fontSize = 15.sp),
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { MainApplication.openUrl("https://github.com/sky130/Suiteki-Pro") })
 
         }

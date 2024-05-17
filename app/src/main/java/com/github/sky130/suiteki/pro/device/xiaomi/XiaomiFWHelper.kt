@@ -20,6 +20,7 @@ import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_FIRMWARE_IN
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_RPK_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_WATCHFACE_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.RPK_COMMAND_TYPE
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.SYSTEM_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_FIRMWARE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_RPK
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_WATCHFACE
@@ -74,8 +75,8 @@ class XiaomiFWHelper(var bytes: ByteArray?) {
         } else if (parseAsFirmware()) {
             checkNotNull(versionName)
             fileType = TYPE_FIRMWARE
-            type = CMD_FIRMWARE_INSTALL
-            subType = TYPE_FIRMWARE
+            type = SYSTEM_COMMAND_TYPE
+            subType = CMD_FIRMWARE_INSTALL
         } else if (parseAsRpk()) {
             subType = CMD_RPK_INSTALL
             type = RPK_COMMAND_TYPE

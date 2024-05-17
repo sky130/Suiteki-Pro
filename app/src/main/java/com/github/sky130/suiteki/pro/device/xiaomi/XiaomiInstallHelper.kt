@@ -5,6 +5,7 @@ import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_RPK_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_UPLOAD_START
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.CMD_WATCHFACE_INSTALL
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.RPK_COMMAND_TYPE
+import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.SYSTEM_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.TYPE_FIRMWARE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.UPLOAD_COMMAND_TYPE
 import com.github.sky130.suiteki.pro.device.xiaomi.XiaomiService.WATCHFACE_COMMAND_TYPE
@@ -32,7 +33,9 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
             helper.init()
             if (helper.fileType == TYPE_FIRMWARE) {
                 support.sendCommand(
-                    XiaomiProto.Command.newBuilder()
+                    Command.newBuilder()
+                        .setType(helper.type)
+                        .setSubtype(helper.subType)
                         .setSystem(
                             XiaomiProto.System.newBuilder()
                                 .setFirmwareInstallRequest(
@@ -48,7 +51,7 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
                 return@launch
             }
             support.sendCommand(
-                XiaomiProto.Command.newBuilder().setType(helper.type).setSubtype(helper.subType)
+                Command.newBuilder().setType(helper.type).setSubtype(helper.subType)
                     .apply {
                         when (helper.type) {
                             WATCHFACE_COMMAND_TYPE -> {
@@ -77,31 +80,31 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
 
     private fun requestUpload() {
         support.sendCommand(
-            XiaomiProto.Command.newBuilder().setType(UPLOAD_COMMAND_TYPE)
-                .setSubtype(CMD_UPLOAD_START).setDataUpload(
-                    XiaomiProto.DataUpload.newBuilder().setDataUploadRequest(
-                        XiaomiProto.DataUploadRequest.newBuilder().setType(helper.fileType)
-                            .setMd5Sum(
-                                ByteString.copyFrom(
-                                    CheckSums.md5(
-                                        fw
-                                    )
-                                )
-                            ).setSize(fw.size)
-                    )
+            Command.newBuilder()
+                .setType(UPLOAD_COMMAND_TYPE)
+                .setSubtype(CMD_UPLOAD_START)
+                .setDataUpload(
+                    XiaomiProto.DataUpload.newBuilder()
+                        .setDataUploadRequest(
+                            XiaomiProto.DataUploadRequest.newBuilder()
+                                .setType(helper.fileType)
+                                .setMd5Sum(ByteString.copyFrom(CheckSums.md5(fw)))
+                                .setSize(fw.size)
+                        )
                 ).build()
         )
     }
 
-    fun handleCommand(cmd: XiaomiProto.Command) {
-        if (cmd.type !in listOf(
-                WATCHFACE_COMMAND_TYPE, RPK_COMMAND_TYPE, UPLOAD_COMMAND_TYPE
-            )
-        ) return
+    private fun handleWatchFaceCommand(cmd: Command) {
         when (cmd.subtype) {
-            CMD_WATCHFACE_INSTALL, CMD_FIRMWARE_INSTALL, CMD_RPK_INSTALL -> {
+            CMD_WATCHFACE_INSTALL -> {
                 requestUpload()
             }
+        }
+    }
+
+    private fun handleUploadCommand(cmd: Command) {
+        when (cmd.subtype) {
 
             CMD_UPLOAD_START -> {
                 val dataUploadAck = cmd.dataUpload.dataUploadAck
@@ -116,8 +119,34 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
                 } else {
                     2048
                 }
+
                 doUpload()
             }
+        }
+    }
+
+    private fun handleRpkCommand(cmd: Command) {
+        when (cmd.subtype) {
+            CMD_RPK_INSTALL -> {
+                requestUpload()
+            }
+        }
+    }
+
+    private fun handleSystemCommand(cmd: Command) {
+        when (cmd.subtype) {
+            CMD_FIRMWARE_INSTALL -> {
+                requestUpload()
+            }
+        }
+    }
+
+    fun handleCommand(cmd: Command) {
+        when (cmd.type) {
+            WATCHFACE_COMMAND_TYPE -> handleWatchFaceCommand(cmd)
+            RPK_COMMAND_TYPE -> handleRpkCommand(cmd)
+            SYSTEM_COMMAND_TYPE -> handleSystemCommand(cmd)
+            UPLOAD_COMMAND_TYPE -> handleUploadCommand(cmd)
         }
     }
 

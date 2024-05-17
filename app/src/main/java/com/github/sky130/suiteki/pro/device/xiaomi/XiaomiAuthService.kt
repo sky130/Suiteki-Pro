@@ -80,7 +80,7 @@ class XiaomiAuthService(val device: XiaomiDevice) {
         val decryptionConfirmation: ByteArray = hmacSHA256(
             decryptionKey, ArrayUtils.addAll(watchNonce.nonce.toByteArray(), *nonce)
         )
-        if (!Arrays.equals(decryptionConfirmation, watchNonce.hmac.toByteArray())) {
+        if (!decryptionConfirmation.contentEquals(watchNonce.hmac.toByteArray())) {
             return null
         }
 

@@ -42,6 +42,7 @@ class MainApplication : Application() {
         fun String.toast() {
             Toast.makeText(context, this, Toast.LENGTH_SHORT).show()
         }
+
     }
 
     override fun onCreate() {
