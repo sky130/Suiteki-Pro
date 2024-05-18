@@ -17,6 +17,7 @@ import com.github.sky130.suiteki.pro.util.CheckSums
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.apache.commons.lang3.ArrayUtils
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.ceil
@@ -74,7 +75,6 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
                         }
                     }.build()
             )
-//            Command.newBuilder().rpkI
         }
     }
 
@@ -108,8 +108,14 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
 
             CMD_UPLOAD_START -> {
                 val dataUploadAck = cmd.dataUpload.dataUploadAck
+//
+//                if (dataUploadAck.unknown2 != 0 || dataUploadAck.resumePosition != 0) {
+//                    installFailure(0, "Unknown Error")
+//                    return
+//                }
 
-                if (dataUploadAck.unknown2 != 0 || dataUploadAck.resumePosition != 0) {
+
+                if (dataUploadAck.unknown2 != 0) {
                     installFailure(0, "Unknown Error")
                     return
                 }
@@ -120,7 +126,7 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
                     2048
                 }
 
-                doUpload()
+                doUpload(dataUploadAck.resumePosition)
             }
         }
     }
@@ -150,10 +156,10 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
         }
     }
 
-    private fun doUpload() {
+    private fun doUpload(index: Int = 0) {
         SuitekiManager.log("doUpload")
         // type + md5 + size + bytes + crc32
-        val buf1 = ByteBuffer.allocate(2 + 16 + 4 + fw.size).order(ByteOrder.LITTLE_ENDIAN)
+        val buf1 = ByteBuffer.allocate(2 + 16 + 4 + fw.size  - index).order(ByteOrder.LITTLE_ENDIAN)
         val md5 = CheckSums.md5(fw)
         if (md5 == null) {
             installFailure(0, "MD5 Missing")
@@ -164,7 +170,7 @@ class XiaomiInstallHelper(val device: XiaomiDevice, private val fw: ByteArray) {
         buf1.put(helper.subType.toByte())
         buf1.put(md5)
         buf1.putInt(fw.size)
-        buf1.put(fw)
+        buf1.put(ArrayUtils.subarray(fw, index, fw.size))
 
         val buf2 = ByteBuffer.allocate(buf1.capacity() + 4).order(ByteOrder.LITTLE_ENDIAN)
         buf2.put(buf1.array())

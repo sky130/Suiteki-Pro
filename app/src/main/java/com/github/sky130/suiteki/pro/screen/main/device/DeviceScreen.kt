@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -23,12 +24,14 @@ import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.Terrain
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -81,33 +84,13 @@ fun DeviceScreen() {
         SuitekiTopBar(title = "设备")
     }) {
         ScanLogDialog(state = scanDialogState)
-        DeviceAddDialog(addDialogState)
+        DeviceAddDialog(addDialogState, scanDialogState)
         Column {
             val list by AppDatabase.instance.device().getList().collectAsState(initial = listOf())
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(5.dp),
                 modifier = Modifier.padding(horizontal = 10.dp),
             ) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        AppCard(
-                            modifier = Modifier.weight(1f),
-                            "小米运动健康添加",
-                            Icons.Outlined.Circle
-                        ) {
-                            scanDialogState.show()
-                        }
-
-                        AppCard(
-                            modifier = Modifier.weight(1f), "ZeppLife 添加", Icons.Outlined.Terrain
-                        ) {
-                            scanDialogState.show()
-                        }
-                    }
-                }
                 items(list) {
                     val editDialogState = rememberDialogState()
                     DeviceEditDialog(editDialogState, device = it)
@@ -164,7 +147,7 @@ fun ScanLogDialog(state: DialogState) {
                 ).let {
                     var time = 0L
                     it.listFiles { _, name ->
-                       name.endsWith("log.zip")
+                        name.endsWith("log.zip")
                     }?.forEach { file ->
                         if (!file.isFile) return@forEach
                         file.nameWithoutExtension.replace("log", "").toLong().let { let ->
@@ -184,8 +167,8 @@ fun ScanLogDialog(state: DialogState) {
                             ?: return@launch withContext(Dispatchers.Main) { "加载失败，日志文件不存在".toast() }
                         val deviceList = arrayListOf<Device>()
                         for (i in text.split("\n")) {
-                            val mac = TextUtils.getRegexMatchText(i, "macAddress=", ", ")
-                            if (mac.isEmpty()||mac.length < 15) continue
+                            val mac = TextUtils.getRegexMatchText(i, "mac=", ", ")
+                            if (mac.isEmpty() || mac.length < 15) continue
                             val authKey = TextUtils.getRegexMatchText(i, "authKey=", ", ")
                             val model = TextUtils.getRegexMatchText(i, "model='", "', ")
                             val encryptKey = TextUtils.getRegexMatchText(i, "encryptKey=", ", ")
@@ -253,6 +236,18 @@ fun ScanLogDialog(state: DialogState) {
                                     )
                                 }
 
+                                "mijia.watch.n62,",
+                                "mjjia.watch.n62lte",
+                                "mijia.watch.n62cg" -> {
+                                    deviceList.add(
+                                        Device(
+                                            "Xiaomi Watch S3 $end Active",
+                                            mac,
+                                            encryptKey
+                                        )
+                                    )
+                                }
+
                             }
                         }
                         AppDatabase.instance.device().insert(deviceList)
@@ -299,16 +294,19 @@ fun ScanLogDialog(state: DialogState) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceAddDialog(dialogState: DialogState) {
+fun DeviceAddDialog(dialogState: DialogState, scanDialogState: DialogState) {
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var mac by remember { mutableStateOf("") }
     var key by remember { mutableStateOf("") }
     SuitekiDialog(
         state = dialogState,
-        onDismissRequest = {},
+        onDismissRequest = {
+            dialogState.dismiss()
+
+        },
         button = {
-            Button(onClick = {
+            TextButton(onClick = {
                 scope.launch {
                     AppDatabase.instance.device().insert(Device(name, mac, key))
                 }
@@ -316,7 +314,7 @@ fun DeviceAddDialog(dialogState: DialogState) {
             }) {
                 Text(text = "确定")
             }
-            OutlinedButton(onClick = { dialogState.dismiss() }) {
+            TextButton(onClick = { dialogState.dismiss() }) {
                 Text(text = "取消")
             }
         },
@@ -329,6 +327,22 @@ fun DeviceAddDialog(dialogState: DialogState) {
                 onValueChange = { mac = it.replace("：", ":") },
                 label = { Text("MAC地址") })
             TextField(value = key, onValueChange = { key = it }, label = { Text("密钥") })
+
+
+            Card({ scanDialogState.show() }, Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp)
+                ) {
+                    Text("通过小米运动健康添加", modifier = Modifier.align(Alignment.CenterStart))
+                    Icon(
+                        Icons.Default.ArrowForward,
+                        null,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    )
+                }
+            }
         }
     }
 }
