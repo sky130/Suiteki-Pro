@@ -34,4 +34,5 @@ jobs:
       - run: mv ${{steps.sign_app.outputs.signedFile}} STK_$GITHUB_REF_NAME.apk
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "*.apk"          generateReleaseNotes: true
+          artifacts: "*.apk"        
+          generateReleaseNotes: true
