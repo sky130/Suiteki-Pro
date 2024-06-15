@@ -21,7 +21,7 @@ jobs:
     - name: Build Release APK
       run: ./gradlew assembleRelease
     - name: Releasing using Hub
-      uses: sangatdesai/release-apk@main
+      uses: ju1c3rSH/Suiteki-Pro@main
       env:
        GITHUB_TOKEN: ${{ secrets.TOKEN }}
        APP_FOLDER: app
